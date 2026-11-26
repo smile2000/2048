@@ -13,7 +13,7 @@
 | `/list/` | 正常列表页 | 按「游戏 / 工具」两个分区展示的传统卡片入口 |
 | `/games/` | 游戏合集 | 16 款游戏的分类目录，按文字 / 数字 / 益智 / 休闲筛选并支持搜索 |
 | `/games/dino/` | 小恐龙快跑 | 谷歌浏览器小恐龙复刻：跳跃、下蹲、仙人掌与翼龙、昼夜切换 |
-| `/games/cat/` | 围住小猫 | 复刻原版 Chat Noir：11×11 错列六边形棋盘、8 块随机石头；小猫用「滴水法」BFS 算最短路径并在多条路中选逃生路线最多的一条，粉色点提示下一步，支持撤销 |
+| `/games/cat/` | 围住小猫 | 复刻原版 Chat Noir：11×11 错列六边形棋盘、8 块占 50%、7 块占 40%、6 块占 10%；小猫用「滴水法」BFS 算最短路径并在多条路中选逃生路线最多的一条，粉色点提示下一步，支持撤销 |
 | `/games/2048/` | 2048 | 数字合并游戏，键盘与触屏、撤销、主题切换、清除记录 |
 | `/games/suika/` | 合成大西瓜 | Canvas 物理碰撞合成，九级水果，一次撤销 |
 | `/games/threes/` | Threes | 1+2=3、3+3=6 的数字合并，4×4 棋盘 |
@@ -151,7 +151,7 @@ DNS 侧添加一条记录（以子域名为例）：
 
 ## 出处与致谢
 
-- **围住小猫 `/cat/`**：玩法源头是日本设计师 Taro Ito 的《黑猫》（Chat Noir，gamedesign.jp）；开源原型为 gamedilong 的 `catch-the-cat`，后由 ganlv 用 Phaser 3 重写为 [ganlvtech/phaser-catch-the-cat](https://github.com/ganlvtech/phaser-catch-the-cat)（MIT）。本站复刻其默认规则：11×11 错列六边形网格、8 块初始随机墙、猫用 `nearestAndMoreRoutesSolver`（从边缘 BFS「滴水法」求最短距离，只朝更近的方向走，多条路时选逃生路线数最多的一条）。方向编号为 0 左 / 1 左上 / 2 右上 / 3 右 / 4 右下 / 5 左下。因聪明猫到边缘仅需 5 步，随机落子几乎必输，需借石头提前围堵。
+- **围住小猫 `/cat/`**：玩法源头是日本设计师 Taro Ito 的《黑猫》（Chat Noir，gamedesign.jp）；开源原型为 gamedilong 的 `catch-the-cat`，后由 ganlv 用 Phaser 3 重写为 [ganlvtech/phaser-catch-the-cat](https://github.com/ganlvtech/phaser-catch-the-cat)（MIT）。本站复刻其默认规则：11×11 错列六边形网格、8 块占 50%、7 块占 40%、6 块占 10%、猫用 `nearestAndMoreRoutesSolver`（从边缘 BFS「滴水法」求最短距离，只朝更近的方向走，多条路时选逃生路线数最多的一条）。方向编号为 0 左 / 1 左上 / 2 右上 / 3 右 / 4 右下 / 5 左下。因聪明猫到边缘仅需 5 步，随机落子几乎必输，需借石头提前围堵。
 
 ## 后续可加
 

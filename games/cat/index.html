@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>围住小猫 · 午夜站台</title>
+<title>围住小猫 · 大黄鱼游乐场</title>
 <style>
   :root{--bg:#080b12;--panel:#121826;--line:#242e42;--text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;--pink:#e890a8;--green:#6ec9a4;--gold:#e8b45c}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -54,7 +54,7 @@
 <body>
 <div class="wrap">
   <div class="top"><h1>围住小猫</h1><a class="back" href="../">← 游戏合集</a></div>
-  <p class="sub">原版 11×11 棋盘，随机散布 8 块石头。你点一次放下一朵花，小猫沿最短路线朝边缘跑——它还会挑逃生路线最多的方向，别让它溜出去。</p>
+  <p class="sub">原版 11×11 棋盘，多数情况散布 8 块石头，四成局面 7 块、一成 6 块。你点一次放下一朵花，小猫沿最短路线朝边缘跑——它还会挑逃生路线最多的方向，别让它溜出去。石头少的时候更难，利用好每一块。</p>
   <div class="bar">
     <span>落子 <b id="moves">0</b></span>
     <span>石头 <b id="rocks">0</b></span>
@@ -159,7 +159,8 @@
       rocks=new Set();
       const pool=cells.filter(c=>!(c.i===cat.i&&c.j===cat.j));
       for(let n=pool.length-1;n>0;n--){const m=Math.floor(Math.random()*(n+1));const t=pool[n];pool[n]=pool[m];pool[m]=t;}
-      pool.slice(0,8).forEach(c=>rocks.add(K(c.i,c.j)));
+      const r=Math.random(); const count = r<0.10 ? 6 : r<0.50 ? 7 : 8; // 8 块 50%、7 块 40%、6 块 10%
+      pool.slice(0,count).forEach(c=>rocks.add(K(c.i,c.j)));
       const d=calcDistances().get(K(cat.i,cat.j));
       ok=d!==undefined&&!isCaughtAt(cat.i,cat.j);
     }
