@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>天气 · 今日气象</title>
+<style>
+  :root{
+    --bg:#080b12;--panel:#121826;--panel2:#171e2e;--line:#242e42;
+    --text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;
+    --cyan:#5cc8e8;--amber:#e8b45c;--blue:#7ba7e8;--green:#6ec9a4;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{background:radial-gradient(ellipse 75% 45% at 50% -8%,rgba(92,200,232,.12),transparent 70%),var(--bg);
+    min-height:100vh;min-height:100dvh;padding:0 18px calc(50px + env(safe-area-inset-bottom))}
+  .wrap{max-width:620px;margin:0 auto}
+  a.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;
+    font-size:12px;padding:18px 0 0;font-family:ui-monospace,monospace}
+  a.back:hover{color:var(--cyan)}
+
+  .search{margin-top:24px;display:flex;gap:8px}
+  .search input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;color:var(--text);font-size:14px;outline:none;font-family:inherit}
+  .search input:focus{border-color:var(--cyan)}
+  .search button{background:var(--cyan);color:#06222e;border:none;border-radius:10px;padding:0 18px;
+    font-weight:600;font-size:14px;cursor:pointer;font-family:inherit}
+  .search button:hover{background:#7ad8f2}
+  .quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+  .quick button{background:none;border:1px solid var(--line);color:var(--muted);font-size:11.5px;
+    padding:5px 11px;border-radius:6px;cursor:pointer;font-family:inherit}
+  .quick button:hover{border-color:var(--cyan);color:var(--cyan)}
+  .suggest{margin-top:6px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+  .suggest div{padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line)}
+  .suggest div:last-child{border-bottom:none}
+  .suggest div:hover{background:var(--panel2)}
+  .suggest small{color:var(--dim);margin-left:8px}
+
+  .loading{text-align:center;color:var(--muted);padding:60px 0;font-size:13px;font-family:ui-monospace,monospace}
+  .error{text-align:center;color:var(--amber);padding:40px 0;font-size:13px;line-height:1.9}
+
+  .card{margin-top:22px;background:linear-gradient(160deg,var(--panel),#0e121c);border:1px solid var(--line);
+    border-radius:16px;padding:28px}
+  .place{display:flex;align-items:baseline;gap:10px}
+  .place h1{font-family:Georgia,"Songti SC",serif;font-size:26px;margin:0;letter-spacing:.04em}
+  .place .region{color:var(--dim);font-size:12px}
+  .updated{margin-left:auto;color:var(--dim);font-size:11px;font-family:ui-monospace,monospace}
+  .now{display:flex;align-items:center;gap:22px;margin-top:26px}
+  .now .big{font-size:72px;font-weight:300;line-height:1;letter-spacing:-.04em}
+  .now .big sup{font-size:26px;vertical-align:top;color:var(--muted)}
+  .now .info .desc{font-size:19px;font-family:Georgia,"Songti SC",serif}
+  .now .info .meta{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.8}
+  .icon{font-size:52px;line-height:1;flex:0 0 auto}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:26px}
+  .stat{background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:10px;padding:12px 8px;text-align:center}
+  .stat .l{font-size:10.5px;color:var(--dim)}
+  .stat .v{font-size:15px;margin-top:6px;font-weight:500}
+
+  .advice{margin-top:18px;padding:14px 16px;background:rgba(232,180,92,.07);
+    border:1px solid rgba(232,180,92,.25);border-radius:10px;font-size:13px;line-height:1.8;color:#e8d5a8}
+
+  .forecast{margin-top:26px}
+  .forecast h2{font-size:13px;font-weight:600;letter-spacing:.06em;margin:0 0 12px;color:var(--muted)}
+  .day{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);font-size:13px}
+  .day:last-child{border-bottom:none}
+  .day .d{width:58px;color:var(--muted);font-family:ui-monospace,monospace;font-size:12px}
+  .day .ic{font-size:22px;width:30px;text-align:center}
+  .day .desc{flex:1;color:var(--muted)}
+  .day .lo{color:var(--blue);width:42px;text-align:right}
+  .day .hi{color:var(--amber);width:42px;text-align:right;font-weight:500}
+  .bar{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--blue),var(--amber));
+    width:90px;margin-left:6px;overflow:hidden}
+  .bar i{display:block;height:100%;background:rgba(255,255,255,.28)}
+
+  footer{text-align:center;color:var(--dim);font-size:10.5px;font-family:ui-monospace,monospace;
+    margin-top:32px;line-height:2}
+  @media(max-width:520px){
+    .now .big{font-size:58px}.icon{font-size:42px}.place h1{font-size:22px}
+    .stats{grid-template-columns:repeat(2,1fr)}.card{padding:22px}
+    .day .bar{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← 返回工具箱</a>
+  <div class="search">
+    <input id="cityInput" type="text" placeholder="输入城市名，如 北京 / Shanghai" autocomplete="off">
+    <button id="searchBtn">查询</button>
+  </div>
+  <div class="quick" id="quick">
+    <button data-city="北京">北京</button>
+    <button data-city="上海">上海</button>
+    <button data-city="广州">广州</button>
+    <button data-city="深圳">深圳</button>
+    <button data-city="成都">成都</button>
+    <button data-city="杭州">杭州</button>
+    <button id="locBtn">📍 定位我</button>
+  </div>
+  <div id="suggestBox"></div>
+  <div id="content"><div class="loading">正在获取天气…</div></div>
+  <footer>数据来源 Open-Meteo · 无需注册 · 仅在你的浏览器请求</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const KEY='weather_city_v1';
+  const CODES={
+    0:['晴','☀️'],1:['多云转晴','🌤️'],2:['局部多云','⛅'],3:['阴','☁️'],
+    45:['雾','🌫️'],48:['雾凇','🌫️'],
+    51:['毛毛雨','🌦️'],53:['小雨','🌦️'],55:['中雨','🌧️'],
+    56:['冻雨','🌧️'],57:['冻雨','🌧️'],
+    61:['小雨','🌧️'],63:['中雨','🌧️'],65:['大雨','🌧️'],
+    66:['冻雨','🌧️'],67:['冻雨','🌧️'],
+    71:['小雪','🌨️'],73:['中雪','🌨️'],75:['大雪','❄️'],77:['米雪','🌨️'],
+    80:['阵雨','🌦️'],81:['阵雨','🌧️'],82:['强阵雨','⛈️'],
+    85:['阵雪','🌨️'],86:['强阵雪','❄️'],
+    95:['雷阵雨','⛈️'],96:['雷暴冰雹','⛈️'],99:['强雷暴冰雹','⛈️']
+  };
+  const $=id=>document.getElementById(id);
+
+  function codeInfo(c){return CODES[c]||['未知','🌡️'];}
+  function weekday(iso){
+    const d=new Date(iso+'T00:00:00');
+    return ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+  }
+  function advice(t,code,rain){
+    let a='';
+    if(t>=30)a+='高温，注意防暑补水。';
+    else if(t>=24)a+='偏热，短袖即可。';
+    else if(t>=16)a+='温度舒适，薄外套备用。';
+    else if(t>=8)a+='偏凉，建议穿外套。';
+    else if(t>=0)a+='寒冷，注意保暖。';
+    else a+='严寒，务必防寒防冻。';
+    if(rain)a+=' 今天有降水，记得带伞。';
+    else if(code===0)a+=' 天气晴好，适合出门。';
+    return a;
+  }
+
+  async function geocode(name){
+    const u='https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(name)+'&count=8&language=zh&format=json';
+    const r=await fetch(u);if(!r.ok)throw new Error('搜索失败');
+    const d=await r.json();return d.results||[];
+  }
+  async function fetchWeather(lat,lon,label,region){
+    const u='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+      '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m'+
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'+
+      '&timezone=auto&forecast_days=5';
+    const r=await fetch(u);if(!r.ok)throw new Error('天气获取失败');
+    const d=await r.json();
+    render(d,label,region,lat,lon);
+  }
+
+  function render(d,label,region,lat,lon){
+    const c=d.current, daily=d.daily;
+    const [desc,icon]=codeInfo(c.weather_code);
+    const rainChance=Math.max(...daily.precipitation_probability_max);
+    const regionText=region||(Math.abs(d.latitude).toFixed(2)+'°, '+Math.abs(d.longitude).toFixed(2)+'°');
+    let html='<div class="card">'+
+      '<div class="place"><h1>'+label+'</h1><span class="region">'+regionText+'</span>'+
+      '<span class="updated">'+c.time.slice(11)+' 更新</span></div>'+
+      '<div class="now"><div class="icon">'+icon+'</div>'+
+      '<div class="big">'+Math.round(c.temperature_2m)+'<sup>°C</sup></div>'+
+      '<div class="info"><div class="desc">'+desc+'</div>'+
+      '<div class="meta">体感 '+Math.round(c.apparent_temperature)+'°<br>湿度 '+c.relative_humidity_2m+'% · 风速 '+Math.round(c.wind_speed_10m)+' km/h</div></div></div>'+
+      '<div class="stats">'+
+        '<div class="stat"><div class="l">最高</div><div class="v" style="color:var(--amber)">'+Math.round(daily.temperature_2m_max[0])+'°</div></div>'+
+        '<div class="stat"><div class="l">最低</div><div class="v" style="color:var(--blue)">'+Math.round(daily.temperature_2m_min[0])+'°</div></div>'+
+        '<div class="stat"><div class="l">降水概率</div><div class="v">'+rainChance+'%</div></div>'+
+        '<div class="stat"><div class="l">体感</div><div class="v">'+Math.round(c.apparent_temperature)+'°</div></div>'+
+      '</div>'+
+      '<div class="advice">'+advice(c.temperature_2m,c.weather_code,rainChance>=50)+'</div>'+
+      '<div class="forecast"><h2>未来几天</h2>';
+    for(let i=0;i<daily.time.length;i++){
+      const [dd,ii]=codeInfo(daily.weather_code[i]);
+      const lo=daily.temperature_2m_min[i],hi=daily.temperature_2m_max[i];
+      html+='<div class="day"><span class="d">'+(i===0?'今天':weekday(daily.time[i]))+'</span>'+
+        '<span class="ic">'+ii+'</span><span class="desc">'+dd+' · 降水 '+daily.precipitation_probability_max[i]+'%</span>'+
+        '<span class="lo">'+Math.round(lo)+'°</span>'+
+        '<span class="bar"><i style="width:'+Math.min(100,Math.max(8,(hi-lo)*4))+'%"></i></span>'+
+        '<span class="hi">'+Math.round(hi)+'°</span></div>';
+    }
+    html+='</div></div>';
+    $('content').innerHTML=html;
+  }
+
+  async function loadCity(name){
+    $('content').innerHTML='<div class="loading">正在查找 '+name+'…</div>';
+    try{
+      const results=await geocode(name);
+      if(!results.length){$('content').innerHTML='<div class="error">找不到「'+name+'」<br>换个名字试试</div>';return;}
+      const r=results[0];
+      const region=[r.admin1,r.country].filter(Boolean).join(' · ');
+      localStorage.setItem(KEY,JSON.stringify({name:r.name,lat:r.latitude,lon:r.longitude,region:region}));
+      $('cityInput').value=r.name;
+      $('suggestBox').innerHTML='';
+      await fetchWeather(r.latitude,r.longitude,r.name,region);
+    }catch(e){
+      $('content').innerHTML='<div class="error">获取失败：'+e.message+'<br>请检查网络后重试</div>';
+    }
+  }
+
+  $('searchBtn').onclick=()=>{const v=$('cityInput').value.trim();if(v)loadCity(v);};
+  $('cityInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('searchBtn').click();});
+  $('cityInput').addEventListener('input',async e=>{
+    const v=e.target.value.trim();
+    if(v.length<2){$('suggestBox').innerHTML='';return;}
+    try{
+      const results=await geocode(v);
+      if(!results.length){$('suggestBox').innerHTML='';return;}
+      let h='<div class="suggest">';
+      results.slice(0,6).forEach((r,i)=>{
+        h+='<div data-i="'+i+'">'+r.name+'<small>'+([r.admin1,r.country].filter(Boolean).join(' · '))+'</small></div>';
+      });
+      h+='</div>';
+      $('suggestBox').innerHTML=h;
+      $('suggestBox').querySelectorAll('div[data-i]').forEach(el=>{
+        el.onclick=()=>{
+          const r=results[+el.dataset.i];
+          const region=[r.admin1,r.country].filter(Boolean).join(' · ');
+          localStorage.setItem(KEY,JSON.stringify({name:r.name,lat:r.latitude,lon:r.longitude,region:region}));
+          $('cityInput').value=r.name;$('suggestBox').innerHTML='';
+          $('content').innerHTML='<div class="loading">正在获取天气…</div>';
+          fetchWeather(r.latitude,r.longitude,r.name,region);
+        };
+      });
+    }catch(err){}
+  });
+  $('quick').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-city]');
+    if(b)loadCity(b.dataset.city);
+  });
+  $('locBtn').onclick=()=>{
+    if(!navigator.geolocation){alert('浏览器不支持定位');return;}
+    $('content').innerHTML='<div class="loading">正在定位…</div>';
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const {latitude,longitude}=pos.coords;
+      $('content').innerHTML='<div class="loading">正在获取天气…</div>';
+      fetchWeather(latitude,longitude,'我的位置','');
+    },()=>{$('content').innerHTML='<div class="error">定位失败，请手动输入城市名</div>';});
+  };
+
+  // 初始加载
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){}
+  if(saved){
+    $('cityInput').value=saved.name;
+    fetchWeather(saved.lat,saved.lon,saved.name,saved.region)
+      .catch(()=>$('content').innerHTML='<div class="error">加载失败，请重新搜索</div>');
+  }else{
+    fetchWeather(39.9042,116.4074,'北京','北京市 · 中国')
+      .catch(()=>$('content').innerHTML='<div class="error">加载失败，请搜索城市</div>');
+  }
+})();
+</script>
+</body>
+</html>

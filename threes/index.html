@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>Threes</title>
+<style>
+  :root{--bg:#080b12;--panel:#121826;--line:#242e42;--text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;--accent:#e5484d;--cyan:#5cc8e8;--amber:#e8b45c}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;min-height:100dvh;padding:0 16px calc(30px + env(safe-area-inset-bottom));background:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(92,200,232,.1),transparent 70%),var(--bg)}
+  .wrap{max-width:430px;margin:0 auto}
+  a.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:12px;padding:16px 0 0;font-family:ui-monospace,monospace}
+  a.back:hover{color:var(--cyan)}
+  header{display:flex;align-items:flex-end;justify-content:space-between;padding:16px 0 14px;gap:10px}
+  h1{font-family:Georgia,serif;font-size:27px;letter-spacing:.12em;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:11.5px;margin:0;line-height:1.6}
+  .scoreBox{text-align:right;flex:0 0 auto;font-family:ui-monospace,monospace}
+  .scoreBox .v{font-size:25px;color:var(--amber);line-height:1}
+  .scoreBox .l{font-size:10px;color:var(--dim);margin-top:4px}
+  .topbar{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+  .nextBox{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:10px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)}
+  .tileNext{width:30px;height:30px;border-radius:6px;display:grid;place-items:center;font-weight:600;font-size:14px}
+  .btn{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:9px 11px;font-size:11.5px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .board{position:relative;background:#0d1320;border:1px solid var(--line);border-radius:14px;padding:10px;touch-action:none}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .cell{aspect-ratio:1;background:rgba(255,255,255,.028);border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;position:relative}
+  .cell .v{font-family:ui-monospace,monospace;font-size:clamp(18px,6vw,28px);font-weight:600;color:#0a0f18;line-height:1;width:100%;height:100%;border-radius:8px;display:grid;place-items:center}
+  .v1{background:#cfd8e8}.v2{background:#e8d9bc}.v3{background:#f2c14e}
+  .v6{background:#f0a35c}.v12{background:#ec7f6a}.v24{background:#e35f7a;color:#fff}
+  .v48{background:#c65fa8;color:#fff}.v96{background:#9a6bd8;color:#fff}
+  .v192,.v384,.v768,.v1536{background:#5cc8e8;color:#06121a}.big{font-size:clamp(15px,5vw,23px)}
+  .over{position:absolute;inset:0;background:rgba(6,9,15,.88);border-radius:14px;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .over.on{display:flex}
+  .over .t{font-family:Georgia,serif;font-size:25px;margin-bottom:8px}
+  .over .s{color:var(--muted);font-size:13px;line-height:2}
+  .over .s b{color:var(--amber);font-family:ui-monospace,monospace;font-size:20px}
+  .over .btn{margin-top:18px;color:var(--cyan);border-color:rgba(92,200,232,.5)}
+  .tip{color:var(--dim);font-size:10.5px;font-family:ui-monospace,monospace;line-height:1.9;margin-top:14px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← 返回游戏合集</a>
+  <header>
+    <div><h1>THREES</h1><p class="sub">1 + 2 = 3，3 + 3 = 6。<br>先凑出 3，路才刚刚开始。</p></div>
+    <div class="scoreBox"><div class="v" id="score">0</div><div class="l">最高 <span id="best">0</span></div></div>
+  </header>
+  <div class="topbar">
+    <div class="nextBox"><span>下一个</span><span class="tileNext" id="nextTile">1</span></div>
+    <button class="btn" id="undoBtn">撤销</button>
+    <button class="btn" id="newBtn">新游戏</button>
+  </div>
+  <div class="board" id="board">
+    <div class="grid" id="grid"></div>
+    <div class="over" id="over"><div class="t">没有可走的了</div>
+      <div class="s">本局得分 <b id="final">0</b><br>最高 <span id="finalBest">0</span></div>
+      <button class="btn" id="againBtn">再来一局</button></div>
+  </div>
+  <div class="tip">方向键 / WASD 移动，手机滑动 · 每次只生成一个新方块<br>1 和 2 相加得 3，之后只能相同数字合并</div>
+</div>
+<script>
+(function(){
+'use strict';
+const N=4,$=id=>document.getElementById(id),grid=$('grid');
+let b=[],score=0,best=0,next=1,prev=null,over=false;
+try{best=Number(localStorage.getItem('threes_best_v1')||0);}catch(e){}
+
+function newTile(){return Math.random()<0.75?1:2;}
+function empty(){
+  const a=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(!b[r][c])a.push([r,c]);
+  return a;
+}
+function spawn(){
+  const a=empty();if(!a.length)return;
+  const [r,c]=a[Math.floor(Math.random()*a.length)];
+  b[r][c]=next;next=newTile();
+}
+function canMerge(a,b){return (a===1&&b===2)||(a===2&&b===1)||(a>=3&&a===b);}
+function lineCells(d,index){
+  const out=[];
+  for(let k=0;k<N;k++){
+    let r,c;
+    if(d==='left'){r=index;c=k;}
+    if(d==='right'){r=index;c=N-1-k;}
+    if(d==='up'){r=k;c=index;}
+    if(d==='down'){r=N-1-k;c=index;}
+    out.push([r,c]);
+  }
+  return out;
+}
+function move(d){
+  if(over)return;
+  const snap=JSON.stringify({b:b,score:score,next:next});
+  let changed=false,gain=0;
+  for(let i=0;i<N;i++){
+    const cells=lineCells(d,i);
+    const vals=cells.map(([r,c])=>b[r][c]).filter(x=>x>0);
+    const res=[];
+    for(let k=0;k<vals.length;k++){
+      if(k+1<vals.length&&canMerge(vals[k],vals[k+1])){
+        const v=vals[k]+vals[k+1];res.push(v);gain+=v;k++;
+      }else res.push(vals[k]);
+    }
+    const start=N-res.length;
+    cells.forEach(([r,c],k)=>{
+      const v=k<start?0:res[k-start];
+      if(b[r][c]!==v)changed=true;
+      b[r][c]=v;
+    });
+  }
+  if(!changed)return;
+  prev=snap;
+  score+=gain;if(score>best){best=score;try{localStorage.setItem('threes_best_v1',String(best));}catch(e){}}
+  spawn();render();
+  if(!canMove()){over=true;$('final').textContent=score;$('finalBest').textContent=best;$('over').classList.add('on');}
+}
+function canMove(){
+  const copy=b.map(r=>r.slice());
+  for(const d of ['left','right','up','down']){
+    let changed=false;
+    for(let i=0;i<N;i++){
+      const cells=lineCells(d,i),vals=cells.map(([r,c])=>b[r][c]).filter(x=>x>0),res=[];
+      for(let k=0;k<vals.length;k++){
+        if(k+1<vals.length&&canMerge(vals[k],vals[k+1])){res.push(vals[k]+vals[k+1]);k++;}
+        else res.push(vals[k]);
+      }
+      const st=N-res.length;
+      cells.forEach(([r,c],k)=>{const v=k<st?0:res[k-st];if(b[r][c]!==v)changed=true;});
+    }
+    b=copy.map(r=>r.slice());
+    if(changed)return true;
+  }
+  return false;
+}
+function render(){
+  grid.innerHTML='';
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const cell=document.createElement('div');cell.className='cell';
+    const v=b[r][c];
+    if(v){
+      const x=document.createElement('div');
+      x.className='v v'+v+(v>=192?' big':'');x.textContent=v;cell.appendChild(x);
+    }
+    grid.appendChild(cell);
+  }
+  $('score').textContent=score;$('best').textContent=best;$('nextTile').textContent=next;
+  const nt=$('nextTile');nt.className='tileNext v'+next;
+}
+function reset(){
+  b=Array.from({length:N},()=>Array(N).fill(0));score=0;prev=null;over=false;next=newTile();
+  for(let i=0;i<9;i++)spawn();
+  $('over').classList.remove('on');render();
+}
+$('newBtn').onclick=reset;$('againBtn').onclick=reset;
+$('undoBtn').onclick=()=>{
+  if(!prev||over)return;
+  const s=JSON.parse(prev);b=s.b;score=s.score;next=s.next;prev=null;render();
+};
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  const map={arrowleft:'left',a:'left',arrowright:'right',d:'right',arrowup:'up',w:'up',arrowdown:'down',s:'down'};
+  if(map[k]){e.preventDefault();move(map[k]);}
+});
+let sx=0,sy=0;
+$('board').addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+$('board').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;
+  move(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up'));
+},{passive:true});
+reset();
+})();
+</script>
+</body>
+</html>

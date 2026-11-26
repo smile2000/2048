@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>文字游戏</title>
+<style>
+  :root{
+    --bg:#080b12;--panel:#121826;--line:#242e42;
+    --text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;
+    --accent:#e5484d;--cyan:#5cc8e8;--amber:#e8b45c;--green:#6ec9a4;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{background:radial-gradient(ellipse 70% 40% at 50% -10%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 70%),var(--bg);
+    min-height:100vh;min-height:100dvh;padding:0 18px calc(50px + env(safe-area-inset-bottom))}
+  .wrap{max-width:680px;margin:0 auto}
+  a.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;
+    font-size:12px;padding:18px 0 0;font-family:ui-monospace,monospace}
+  a.back:hover{color:var(--accent)}
+  header{padding:20px 0 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+  h1{font-family:Georgia,"Songti SC",serif;font-size:26px;letter-spacing:.08em;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:12px;margin:0;line-height:1.7}
+  .tools{display:flex;gap:6px;flex:0 0 auto}
+  .mini{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;
+    padding:7px 10px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .mini:hover{border-color:var(--accent);color:var(--accent)}
+
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin:4px 0 14px}
+  .stat{flex:1 1 110px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .stat .t{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+  .stat .t b{color:var(--text);font-weight:500}
+  .stat .track{height:4px;background:var(--line);border-radius:4px;margin-top:8px;overflow:hidden}
+  .stat .track div{height:100%;border-radius:4px;transition:width .35s}
+
+  .progress{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--dim);
+    display:flex;justify-content:space-between;padding:10px 2px;border-bottom:1px solid var(--line)}
+
+  #story{padding:22px 2px 8px;cursor:pointer;min-height:160px}
+  .p{font-size:15px;line-height:2.05;margin:0 0 16px;letter-spacing:.02em;color:var(--text)}
+  .p.say{color:var(--cyan);border-left:2px solid color-mix(in srgb,var(--cyan) 40%,transparent);padding-left:12px}
+  .p.note{color:var(--muted);font-size:13.5px;font-style:italic}
+  .p.strong{color:var(--amber)}
+  .cursor{display:inline-block;width:7px;height:15px;background:var(--accent);vertical-align:-2px;
+    margin-left:2px;animation:blink .8s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .skip{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--dim);text-align:right;margin:-6px 0 16px}
+
+  .choices{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+  .choice{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+    background:linear-gradient(120deg,var(--panel),#0d121d);color:var(--text);
+    border:1px solid var(--line);border-radius:11px;padding:13px 15px;
+    font-size:13.5px;line-height:1.6;cursor:pointer;font-family:inherit;transition:.16s}
+  .choice:hover{border-color:var(--accent);transform:translateX(3px)}
+  .choice .k{font-family:ui-monospace,monospace;font-size:11px;color:var(--accent);
+    border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);border-radius:5px;
+    width:22px;height:22px;display:grid;place-items:center;flex:0 0 auto}
+  .choice.locked{opacity:.45;cursor:not-allowed}
+  .choice.locked:hover{transform:none;border-color:var(--line)}
+
+  .ending{margin-top:10px;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);
+    border-radius:14px;padding:20px;background:linear-gradient(150deg,var(--panel),#0b0f18)}
+  .ending .tag{font-family:ui-monospace,monospace;font-size:10px;color:var(--accent);letter-spacing:.2em}
+  .ending h2{font-family:Georgia,"Songti SC",serif;font-size:23px;margin:10px 0 14px;letter-spacing:.06em}
+  .ending .text{font-size:14px;line-height:2;color:var(--muted)}
+  .ending .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+
+  .overlay{position:fixed;inset:0;background:rgba(4,6,11,.86);z-index:20;display:none;
+    align-items:flex-start;justify-content:center;padding:12vh 18px 30px;overflow:auto}
+  .overlay.on{display:flex}
+  .sheet{width:100%;max-width:520px;background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:24px 22px}
+  .sheet h3{font-family:Georgia,"Songti SC",serif;font-size:19px;margin:0 0 16px;letter-spacing:.06em}
+  .sheet .close{float:right;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
+  .clue{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:1.7}
+  .clue .n{font-family:ui-monospace,monospace;color:var(--accent);font-size:11px;flex:0 0 26px}
+  .clue:last-child{border-bottom:none}
+  .endItem{padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .endItem span{font-family:ui-monospace,monospace;font-size:10px;color:var(--dim);margin-left:8px}
+  .empty{color:var(--dim);font-size:12px;padding:14px 0}
+  footer{text-align:center;color:var(--dim);font-size:10px;font-family:ui-monospace,monospace;margin-top:30px;line-height:2}
+  @media(max-width:520px){h1{font-size:22px}.p{font-size:14px;line-height:1.95}.choice{font-size:12.5px;padding:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← 返回文字游戏目录</a>
+  <header>
+    <div>
+      <h1 id="title"></h1>
+      <p class="sub" id="sub"></p>
+    </div>
+    <div class="tools">
+      <button class="mini" id="clueBtn">线索</button>
+      <button class="mini" id="endBtn">结局</button>
+      <button class="mini" id="resetBtn">重来</button>
+    </div>
+  </header>
+  <div class="stats" id="stats"></div>
+  <div class="progress"><span id="progLeft"></span><span id="progRight"></span></div>
+  <div id="story"></div>
+  <div class="choices" id="choices"></div>
+  <footer>数字键 1—9 选择 · 点击正文跳过打字 · 进度保存在本机</footer>
+</div>
+
+<div class="overlay" id="clueOverlay"><div class="sheet">
+  <button class="close" data-close>×</button><h3>线索本</h3><div id="clueList"></div>
+</div></div>
+<div class="overlay" id="endOverlay"><div class="sheet">
+  <button class="close" data-close>×</button><h3>结局收藏</h3><div id="endList"></div>
+</div></div>
+
+<script>
+(function(){
+'use strict';
+const CFG = {
+ title:"雨夜出租车",
+ sub:"乘客报出一个地址：回声路 17 号。这座城市没有这条路。",
+ key:"text_taxi_v1", accent:"#5cc8e8", stats:[],
+ clues:[
+  {id:"c_address",name:"回声路 17 号",desc:"导航搜不到。乘客说：往前开，到了你就知道。"},
+  {id:"c_passenger",name:"后视镜里的乘客",desc:"他一直低着头。你看清过他的脸一次，那不是人的脸。"},
+  {id:"c_radio",name:"电台的深夜节目",desc:"主持人念出一串车牌号，正是你这辆车。节目说：它十年前就报废了。"},
+  {id:"c_photo",name:"仪表台上的照片",desc:"你和妻子的合影，日期是十年前的今天。照片边缘被水泡过。"},
+  {id:"c_meter",name:"跳动的计价器",desc:"计价器从起步价一路往上跳，数字却是一位日期：10 17 03。"},
+  {id:"c_crash",name:"那场事故",desc:"十年前的雨夜，你在回声路撞了人。副驾驶坐着你的妻子。"}
+ ],
+ endings:{
+  e_arrive:{name:"抵达回声路",text:"车停在一条不存在于地图上的路口。17 号是一栋老房子，灯亮着。\n乘客下车前说：谢谢你，这次没有迟疑。\n他走进门，屋里传来女人的笑声。你认得那个声音。"},
+  e_driver:{name:"你就是乘客",text:"你打开后座车门，里面没有人。\n驾驶座上的人转过头，穿着你的衣服，年纪比你年轻十岁。\n他说：轮到你坐后面了。\n于是你坐了进去，车继续往前开。"},
+  e_empty:{name:"空车",text:"你踩下刹车，回头看——后座是空的。\n计价器停在 0 元，雨刮器还在摆动。\n电台里主持人说：今晚最后一班车，已经收工了。\n你摸了摸仪表台上的照片，是干的。"},
+  e_crash:{name:"事故重演",text:"你闯过红灯的瞬间，雨刷扫过挡风玻璃，前面出现一个人影。\n你猛打方向，车撞向护栏。\n广播里传来十年前那句熟悉的新闻播报。\n这一次，你终于看清了那个人的脸。"},
+  e_dawn:{name:"天亮返程",text:"你把车停在路边等到天亮。乘客在后座一言不发地消失了。\n计价器归零，导航重新出现了这条路——回声路，17 号。\n白天它只是一家修车铺。你没进去。"}
+ },
+ story:{
+  start:{text:["23:12，雨下得很大。你在高架上接了这一单。","乘客坐进后座，报出一个地址：回声路 17 号。","你打开导航——搜不到这条路。"],clue:"c_address",choices:[
+   {t:"问乘客是不是说错了",to:"talk"},
+   {t:"什么也不说，按他说的方向开",to:"silence"},
+   {t:"从后视镜里看他一眼",to:"mirror"}
+  ]},
+  talk:{text:["『没有这条路。』你说。","后座沉默了几秒：『往前开，到了你就知道。』"],choices:[
+   {t:"打开电台找点声音",to:"radio"},
+   {t:"看一眼仪表台上的照片",to:"photo"},
+   {t:"继续问他是谁",to:"who"}
+  ]},
+  silence:{text:["你没说话。后座也没有。","车驶下高架，进入一片没有路灯的街区。雨刷扫过玻璃，像有人在窗外擦。"],choices:[
+   {t:"打开电台",to:"radio"},
+   {t:"看后视镜",to:"mirror"}
+  ]},
+  mirror:{text:["后视镜里，乘客低着头，帽檐压得很低。","他忽然抬起脸——那不是一张人的脸。","你眨了下眼，他又恢复了正常。"],clue:"c_passenger",choices:[
+   {t:"握紧方向盘，继续开",to:"radio"},
+   {t:"问：我们认识吗？",to:"who"},
+   {t:"靠边停车",to:"stop"}
+  ]},
+  who:{text:["『十年前，你有没有在雨夜载过一个人？』他问。","你的手心开始出汗。仪表台上的照片被雨泡过边角。"],clue:"c_photo",choices:[
+   {t:"说：不记得了",to:"radio"},
+   {t:"说：那场事故不是我的错",to:"crashMemory"},
+   {t:"反问：你是谁？",to:"reveal"}
+  ]},
+  crashMemory:{text:["话一出口，雨声忽然变得很近。","你想起那晚：方向盘、护栏、副驾驶的妻子。还有后座那个没来得及下车的人。"],clue:"c_crash",choices:[
+   {t:"继续开，去那个地址",to:"crossroad"},
+   {t:"踩刹车停下",to:"stop"}
+  ]},
+  radio:{text:["电台在做深夜节目。主持人念出一串车牌号——是你的车。","『这辆车十年前就报废了。』主持人说，『如果有人看见它，请不要上车。』"],clue:"c_radio",choices:[
+   {t:"关掉电台",to:"crossroad"},
+   {t:"看计价器",to:"meter"},
+   {t:"靠边停车",to:"stop"}
+  ]},
+  photo:{text:["仪表台上夹着一张合影：你、妻子，还有十年前的这辆车。","照片背面写着一行字：回声路 17 号，我们第一次见面的地方。"],clue:"c_photo",choices:[
+   {t:"把照片翻回去，继续开",to:"radio"},
+   {t:"问乘客：你认识她吗？",to:"reveal"}
+  ]},
+  meter:{text:["计价器跳得飞快，但显示的不是金额：10 17 03。","像一组日期，也像一个倒数的门牌号。"],clue:"c_meter",choices:[
+   {t:"继续往前",to:"crossroad"},
+   {t:"按下计价器归零",to:"e_empty"}
+  ]},
+  reveal:{text:["『我是那天晚上，你没能送到的人。』他说。","『这次我想看看，你会不会把我送到。』"],choices:[
+   {t:"答应他，继续开",to:"crossroad"},
+   {t:"把车停下，请他下去",to:"stop"}
+  ]},
+  stop:{text:["你把车停在路边，拉起手刹。","后座没有动静。你回头——座位上只有一张湿透的纸条：回声路 17 号。"],choices:[
+   {t:"等到天亮再走",to:"e_dawn"},
+   {t:"重新上路，去那个地址",to:"crossroad"},
+   {t:"看计价器",to:"meter"}
+  ]},
+  crossroad:{text:["前方是十字路口，红灯。导航在这里彻底失灵。","左边是城区，右边是一条没有名字的路。后座的人说：右转。"],choices:[
+   {t:"右转，去回声路",to:"arrive",need:["c_address"]},
+   {t:"闯红灯直行",to:"e_crash"},
+   {t:"掉头回城",to:"e_dawn"}
+  ]},
+  arrive:{text:["右转之后，雨突然停了。","路牌上写着：回声路 17 号。"],choices:[
+   {t:"停车，让他下车",to:"e_arrive"},
+   {t:"从后视镜再看他一眼",to:"e_driver"}
+  ]},
+  e_arrive:{end:true,text:[]}, e_driver:{end:true,text:[]}, e_empty:{end:true,text:[]}, e_crash:{end:true,text:[]}, e_dawn:{end:true,text:[]}
+ }
+};
+const S=CFG.story, CLUES=CFG.clues||[], ENDINGS=CFG.endings||{};
+const $=id=>document.getElementById(id);
+const blank=()=>({node:'start',visited:[],clues:[],stats:Object.fromEntries((CFG.stats||[]).map(s=>[s.k,s.start])),endings:[],done:false});
+let state=blank(), timer=null, typing=false, fullText='';
+
+function load(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(CFG.key)||'null');
+    if(raw&&raw.node&&S[raw.node])state=Object.assign(blank(),raw);
+  }catch(e){}
+}
+function save(){try{localStorage.setItem(CFG.key,JSON.stringify(state));}catch(e){}}
+
+function fillStats(){
+  const box=$('stats');
+  if(!CFG.stats||!CFG.stats.length){box.innerHTML='';return;}
+  box.innerHTML=CFG.stats.map(s=>{
+    const v=state.stats[s.k]??s.start, pct=Math.max(0,Math.min(100,v/s.max*100));
+    return '<div class="stat"><div class="t"><span>'+s.icon+' '+s.label+'</span><b>'+v+' / '+s.max+'</b></div>'+
+      '<div class="track"><div style="width:'+pct+'%;background:'+s.color+'"></div></div></div>';
+  }).join('');
+}
+function fillProgress(){
+  $('progLeft').textContent='节点 '+state.visited.length+' / '+Object.keys(S).length;
+  $('progRight').textContent='线索 '+state.clues.length+' / '+CLUES.length+' · 结局 '+state.endings.length+' / '+Object.keys(ENDINGS).length;
+}
+function fillLists(){
+  $('clueList').innerHTML=CLUES.map((c,i)=>state.clues.includes(c.id)
+    ?'<div class="clue"><span class="n">'+String(i+1).padStart(2,'0')+'</span><span><b>'+c.name+'</b><br>'+c.desc+'</span></div>'
+    :'<div class="clue"><span class="n">'+String(i+1).padStart(2,'0')+'</span><span style="color:var(--dim)">？？？ · 尚未发现</span></div>').join('');
+  $('endList').innerHTML=Object.keys(ENDINGS).map((k,i)=>state.endings.includes(k)
+    ?'<div class="endItem">'+String(i+1).padStart(2,'0')+' · '+ENDINGS[k].name+'<span>已解锁 ✓</span></div>'
+    :'<div class="endItem" style="color:var(--dim)">'+String(i+1).padStart(2,'0')+' · ？？？<span>未解锁</span></div>').join('');
+}
+function visible(c){
+  if(c.need&&!c.need.every(x=>state.clues.includes(x)))return false;
+  if(c.hideIf&&c.hideIf.every(x=>state.visited.includes(x)))return false;
+  if(c.needStats&&Object.keys(c.needStats).some(k=>(state.stats[k]||0)<c.needStats[k]))return false;
+  return true;
+}
+function subText(s){
+  return s.replace(/\{(energy|trust|eerie|body|mind|luck)\}/g,(_,k)=>state.stats[k]??0);
+}
+
+function stopType(){
+  if(timer){clearInterval(timer);timer=null;}
+  if(typing){typing=false;fullText='';}
+}
+function render(id,instant){
+  stopType();
+  const node=S[id];
+  if(!node){$('story').innerHTML='<div class="p">……</div>';return;}
+  state.node=id;
+  if(!state.visited.includes(id))state.visited.push(id);
+  if(node.clue&&!state.clues.includes(node.clue))state.clues.push(node.clue);
+  save();fillStats();fillProgress();fillLists();
+
+  const lines=(node.text||[]).map(t=>subText(t));
+  const box=$('story');box.innerHTML='';
+  if(node.end){
+    state.done=true;
+    if(!state.endings.includes(id))state.endings.push(id);
+    save();fillProgress();fillLists();
+    const e=ENDINGS[id]||{name:'结局',text:''};
+    box.innerHTML='<div class="ending"><div class="tag">ENDING · 结局</div><h2>'+e.name+'</h2>'+
+      '<div class="text">'+e.text.split('\n').map(x=>'<p style="margin:0 0 10px">'+subText(x)+'</p>').join('')+'</div>'+
+      '<div class="acts"><button class="mini" id="againBtn">再走一次</button>'+
+      '<button class="mini" id="endListBtn">看看其他结局</button></div></div>';
+    $('againBtn').onclick=restart;
+    $('endListBtn').onclick=()=>{$('endOverlay').classList.add('on');};
+    $('choices').innerHTML='';
+    return;
+  }
+  state.done=false;
+  let li=0, ci=0, buf='';
+  const para=document.createElement('div');
+  para.className='p'+(node.tone?' '+node.tone:'');
+  box.appendChild(para);
+  const cursor=document.createElement('span');cursor.className='cursor';para.appendChild(cursor);
+
+  function nextPara(){
+    if(li>=lines.length){cursor.remove();renderChoices(node);return;}
+    const line=lines[li++];
+    const target=document.createElement('div');
+    target.className='p'+(node.tones&&node.tones[li-1]?node.tones[li-1]:'');
+    if(node.tone&&!node.tones)target.className+=' '+node.tone;
+    box.insertBefore(target,cursor);
+    if(instant){target.textContent=line;nextPara();return;}
+    typing=true;fullText=line;ci=0;buf='';
+    timer=setInterval(()=>{
+      if(ci>=line.length){clearInterval(timer);timer=null;typing=false;nextPara();return;}
+      const ch=line[ci++];buf+=ch;target.textContent=buf;
+      if('。！？'.includes(ch))ci+=Math.random()<0.5?2:1;
+    },28);
+  }
+  nextPara();
+}
+function renderChoices(node){
+  const list=(node.choices||[]).filter(visible);
+  const box=$('choices');
+  if(!list.length){
+    box.innerHTML='<button class="choice"><span class="k">·</span>故事似乎在这里停住了。点「重来」换一条路。</button>';
+    return;
+  }
+  box.innerHTML=list.map((c,i)=>'<button class="choice" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+c.t+'</span></button>').join('');
+  box.querySelectorAll('.choice').forEach(btn=>{
+    btn.onclick=()=>pick(list[Number(btn.dataset.i)]);
+  });
+}
+function pick(c){
+  if(typing){finishTyping();return;}
+  if(c.delta){for(const k in c.delta)state.stats[k]=(state.stats[k]||0)+c.delta[k];}
+  if(c.clue&&!state.clues.includes(c.clue))state.clues.push(c.clue);
+  let to=c.to;
+  if(to==='@end'&&CFG.resolveEnd)to=CFG.resolveEnd(state);
+  save();
+  render(to,false);
+  const story=$('story');if(story)story.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function finishTyping(){
+  stopType();
+  // 重新渲染当前节点，直接显示全部文字与选项
+  const id=state.node;
+  render(id,true);
+}
+function restart(){
+  if(!confirm('重新开始这个故事？当前进度会被覆盖。'))return;
+  state=blank();save();render('start',true);window.scrollTo({top:0,behavior:'smooth'});
+}
+
+$('story').onclick=()=>{if(typing)finishTyping();};
+document.addEventListener('keydown',e=>{
+  if($('clueOverlay').classList.contains('on')||$('endOverlay').classList.contains('on')){
+    if(e.key==='Escape'){$('clueOverlay').classList.remove('on');$('endOverlay').classList.remove('on');}
+    return;
+  }
+  if(typing&&(e.key===' '||e.key==='Enter')){e.preventDefault();finishTyping();return;}
+  const n=Number(e.key);
+  if(n>=1&&n<=9){
+    const btn=$('choices').querySelector('.choice[data-i="'+(n-1)+'"]');
+    if(btn)btn.click();
+  }
+});
+$('clueBtn').onclick=()=>{fillLists();$('clueOverlay').classList.add('on');};
+$('endBtn').onclick=()=>{$('endOverlay').classList.add('on');};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.overlay').classList.remove('on'));
+document.querySelectorAll('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o)o.classList.remove('on');});
+$('resetBtn').onclick=restart;
+
+$('title').textContent=CFG.title;
+$('sub').textContent=CFG.sub;
+document.title=CFG.title+' · 文字游戏';
+load();
+render(state.node,true);
+})();
+</script>
+</body>
+</html>

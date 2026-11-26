@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>数独</title>
+<style>
+  :root{--bg:#080b12;--panel:#121826;--line:#242e42;--strong:#4a5875;--text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;--accent:#e5484d;--cyan:#5cc8e8;--green:#6ec9a4;--amber:#e8b45c}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;min-height:100dvh;padding:0 12px calc(28px + env(safe-area-inset-bottom));background:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(92,200,232,.09),transparent 70%),var(--bg)}
+  .wrap{max-width:450px;margin:0 auto}
+  a.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:12px;padding:16px 0 0;font-family:ui-monospace,monospace}
+  a.back:hover{color:var(--cyan)}
+  header{display:flex;align-items:flex-end;justify-content:space-between;padding:14px 0 10px;gap:8px}
+  h1{font-family:Georgia,serif;font-size:25px;letter-spacing:.1em;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:11px;margin:0}
+  .stat{text-align:right;font-family:ui-monospace,monospace;flex:0 0 auto}
+  .stat .t{font-size:17px;color:var(--amber)}
+  .stat .m{font-size:10px;color:var(--dim);margin-top:3px}
+  .levels{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .lev{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 11px;font-size:11.5px;cursor:pointer;font-family:inherit}
+  .lev.on{background:rgba(92,200,232,.1);border-color:var(--cyan);color:var(--cyan)}
+  .board{display:grid;grid-template-columns:repeat(9,1fr);aspect-ratio:1;border:2px solid var(--strong);border-radius:6px;overflow:hidden;background:#0d1320}
+  .cell{aspect-ratio:1;display:grid;place-items:center;position:relative;font-family:ui-monospace,monospace;font-size:clamp(15px,5vw,23px);
+    border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer;color:var(--cyan)}
+  .cell:nth-child(9n){border-right:none}
+  .cell:nth-child(n+73){border-bottom:none}
+  .cell.br{border-right:2px solid var(--strong)}
+  .cell.bb{border-bottom:2px solid var(--strong)}
+  .cell.given{color:var(--text);font-weight:600}
+  .cell.sel{background:rgba(92,200,232,.16)}
+  .cell.peer{background:rgba(255,255,255,.035)}
+  .cell.same{background:rgba(232,180,92,.13)}
+  .cell.wrong{color:var(--accent)}
+  .cell .notes{display:grid;grid-template-columns:repeat(3,1fr);font-size:9px;line-height:1.25;color:var(--dim);width:100%;height:100%;padding:2px}
+  .pad{display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-top:13px}
+  .key{aspect-ratio:1;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--text);
+    font-family:ui-monospace,monospace;font-size:clamp(14px,4.4vw,19px);cursor:pointer}
+  .key:hover{border-color:var(--cyan);color:var(--cyan)}
+  .tools{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .btn{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:8px 11px;font-size:11.5px;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .btn.on{border-color:var(--amber);color:var(--amber)}
+  .msg{font-family:ui-monospace,monospace;font-size:11px;color:var(--dim);margin-top:12px;min-height:17px;text-align:center}
+  .msg.warn{color:var(--amber)}
+  .over{position:fixed;inset:0;background:rgba(5,8,14,.9);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
+  .over.on{display:flex}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;text-align:center;max-width:320px;width:100%}
+  .sheet h2{font-family:Georgia,serif;font-size:23px;margin:0 0 12px}
+  .sheet p{color:var(--muted);font-size:13px;line-height:1.9;margin:0 0 20px}
+  .sheet .btn{color:var(--cyan);border-color:rgba(92,200,232,.5)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← 返回游戏合集</a>
+  <header>
+    <div><h1>数独</h1><p class="sub">每行、每列、每宫，1 到 9 各出现一次</p></div>
+    <div class="stat"><div class="t" id="timer">0:00</div><div class="m">错误 <span id="mistakes">0</span></div></div>
+  </header>
+  <div class="levels" id="levels"></div>
+  <div class="board" id="board"></div>
+  <div class="pad" id="pad"></div>
+  <div class="tools">
+    <button class="btn" id="noteBtn">笔记：关</button>
+    <button class="btn" id="eraseBtn">擦除</button>
+    <button class="btn" id="undoBtn">撤销</button>
+    <button class="btn" id="hintBtn">提示</button>
+    <button class="btn" id="newBtn">新一局</button>
+  </div>
+  <div class="msg" id="msg">点击格子后选数字 · 笔记模式下数字会作为候选记在角上</div>
+</div>
+<div class="over" id="over"><div class="sheet"><h2>完成</h2><p id="winText"></p><button class="btn" id="againBtn">再来一局</button></div></div>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id),LV={easy:{n:'简单',clues:42},mid:{n:'中等',clues:34},hard:{n:'困难',clues:28}};
+let level='easy',puzzle=[],sol=[],grid=[],notes=[],given=[],sel=null,noteMode=false,mistakes=0,secs=0,timer=null,undo=[],done=false;
+const SKEY='sudoku_state_v1';
+
+function perm(n){const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function shuffleSol(){
+  let g=Array.from({length:9},(_,r)=>Array.from({length:9},(_,c)=>(3*(r%3)+Math.floor(r/3)+c)%9));
+  const dm=perm(9);g=g.map(row=>row.map(v=>dm[v]+1));
+  let rows=[];for(let b=0;b<3;b++){const band=[0,1,2].map(i=>b*3+i);rows.push(...perm(3).map(i=>band[i]));}
+  g=rows.map(r=>g[r].slice());
+  let cols=[];for(let s=0;s<3;s++){const st=[0,1,2].map(i=>s*3+i);cols.push(...perm(3).map(i=>st[i]));}
+  g=g.map(row=>cols.map(c=>row[c]));
+  const bands=perm(3);let gr=[];for(const b of bands)gr.push(...g.slice(b*3,b*3+3));g=gr;
+  const stacks=perm(3);g=g.map(row=>{let o=[];for(const s of stacks)o.push(...row.slice(s*3,s*3+3));return o;});
+  return g;
+}
+function popcount(x){let n=0;while(x){x&=x-1;n++;}return n;}
+function countSol(g,limit){
+  const R=new Array(9).fill(0),C=new Array(9).fill(0),B=new Array(9).fill(0);
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    const v=g[r][c];if(!v)continue;
+    const bit=1<<(v-1),bx=Math.floor(r/3)*3+Math.floor(c/3);
+    if((R[r]|C[c]|B[bx])&bit)return 0;
+    R[r]|=bit;C[c]|=bit;B[bx]|=bit;
+  }
+  function rec(){
+    let best=-1,mask=0,cnt=10;
+    for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+      if(g[r][c])continue;
+      const bx=Math.floor(r/3)*3+Math.floor(c/3);
+      const m=(~(R[r]|C[c]|B[bx]))&0x1FF,n=popcount(m);
+      if(n<cnt){cnt=n;best=r*9+c;mask=m;if(n<=1)break;}
+    }
+    if(best<0)return 1;
+    if(cnt===0)return 0;
+    const r=Math.floor(best/9),c=best%9,bx=Math.floor(r/3)*3+Math.floor(c/3);
+    let total=0;
+    for(let v=1;v<=9;v++){
+      const bit=1<<(v-1);if(!(mask&bit))continue;
+      g[r][c]=v;R[r]|=bit;C[c]|=bit;B[bx]|=bit;
+      total+=rec();
+      g[r][c]=0;R[r]&=~bit;C[c]&=~bit;B[bx]&=~bit;
+      if(total>=limit)break;
+    }
+    return total;
+  }
+  return rec();
+}
+function generate(lv){
+  const solution=shuffleSol(),p=solution.map(r=>r.slice());
+  const order=perm(81);let clues=81;
+  for(const idx of order){
+    if(clues<=LV[lv].clues)break;
+    const r=Math.floor(idx/9),c=idx%9,saved=p[r][c];
+    p[r][c]=0;
+    if(countSol(p.map(x=>x.slice()),2)!==1)p[r][c]=saved;
+    else clues--;
+  }
+  return {puzzle:p,solution:solution};
+}
+function fmt(t){return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
+function start(lv){
+  level=lv;$('msg').textContent='正在生成题目…';$('msg').className='msg warn';
+  setTimeout(()=>{
+    const g=generate(lv);
+    puzzle=g.puzzle;sol=g.solution;
+    grid=puzzle.map(r=>r.slice());given=puzzle.map(r=>r.map(v=>v>0));
+    notes=Array.from({length:9},()=>Array.from({length:9},()=>[]));
+    sel=null;noteMode=false;mistakes=0;secs=0;undo=[];done=false;
+    clearInterval(timer);timer=setInterval(()=>{secs++;$('timer').textContent=fmt(secs);save();},1000);
+    $('over').classList.remove('on');$('mistakes').textContent='0';$('timer').textContent='0:00';
+    $('noteBtn').textContent='笔记：关';$('noteBtn').classList.remove('on');
+    renderLevels();render();save();
+    msg('题目已生成，慢慢来。');
+  },20);
+}
+function save(){
+  try{localStorage.setItem(SKEY,JSON.stringify({level,puzzle,sol,grid,notes,given,sel,mistakes,secs,done}));}catch(e){}
+}
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SKEY)||'null');
+    if(!s||!s.puzzle||!s.sol)return false;
+    level=s.level;puzzle=s.puzzle;sol=s.sol;grid=s.grid;notes=s.notes||[];given=s.given;
+    sel=s.sel;mistakes=s.mistakes||0;secs=s.secs||0;done=s.done;undo=[];
+    clearInterval(timer);if(!done)timer=setInterval(()=>{secs++;$('timer').textContent=fmt(secs);save();},1000);
+    $('timer').textContent=fmt(secs);$('mistakes').textContent=mistakes;
+    renderLevels();render();return true;
+  }catch(e){return false;}
+}
+function msg(t,warn){$('msg').textContent=t;$('msg').className='msg'+(warn?' warn':'');}
+function renderLevels(){
+  $('levels').innerHTML='';
+  Object.keys(LV).forEach(k=>{
+    const b=document.createElement('button');b.className='lev'+(level===k?' on':'');b.textContent=LV[k].n;
+    b.onclick=()=>{if(confirm('开始新的一局？当前进度会丢失。'))start(k);};$('levels').appendChild(b);
+  });
+}
+function render(){
+  const box=$('board');box.innerHTML='';
+  const sr=sel?Math.floor(sel/9):-1,sc=sel?sel%9:-1,sv=sel?grid[sr][sc]:0;
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    const i=r*9+c,v=grid[r][c],x=document.createElement('div');
+    let cls='cell';
+    if(given[r][c])cls+=' given';
+    if(c===2||c===5)cls+=' br';if(r===2||r===5)cls+=' bb';
+    if(sel===i)cls+=' sel';
+    else if(sr>=0&&(r===sr||c===sc||(Math.floor(r/3)===Math.floor(sr/3)&&Math.floor(c/3)===Math.floor(sc/3))))cls+=' peer';
+    if(sv&&v===sv&&sel!==i)cls+=' same';
+    if(v&&v!==sol[r][c])cls+=' wrong';
+    x.className=cls;
+    if(v)x.textContent=v;
+    else if(notes[r]&&notes[r][c]&&notes[r][c].length){
+      const n=document.createElement('div');n.className='notes';
+      n.innerHTML=[1,2,3,4,5,6,7,8,9].map(k=>notes[r][c].includes(k)?k:'').join('');x.appendChild(n);
+    }
+    x.onclick=()=>{if(done)return;sel=i;render();};
+    box.appendChild(x);
+  }
+  $('pad').innerHTML='';
+  for(let n=1;n<=9;n++){
+    const b=document.createElement('button');b.className='key';b.textContent=n;
+    b.onclick=()=>input(n);$('pad').appendChild(b);
+  }
+}
+function input(n){
+  if(done||sel===null)return;
+  const r=Math.floor(sel/9),c=sel%9;
+  if(given[r][c]){msg('这是题目给出的数字，不能改。',true);return;}
+  undo.push({r,c,old:grid[r][c],notes:notes[r][c].slice(),mistakes:mistakes});
+  if(noteMode){
+    const a=notes[r][c],i=a.indexOf(n);
+    if(i>=0)a.splice(i,1);else a.push(n);
+    notes[r][c]=a;
+  }else{
+    if(grid[r][c]===n)grid[r][c]=0;
+    else{grid[r][c]=n;notes[r][c]=[];if(n!==sol[r][c])mistakes++;}
+  }
+  $('mistakes').textContent=mistakes;render();save();checkWin();
+}
+$('noteBtn').onclick=()=>{
+  noteMode=!noteMode;$('noteBtn').textContent='笔记：'+(noteMode?'开':'关');
+  $('noteBtn').classList.toggle('on',noteMode);msg(noteMode?'笔记模式：数字记为候选':'普通模式：数字直接填入');
+};
+$('eraseBtn').onclick=()=>{
+  if(sel===null||done)return;const r=Math.floor(sel/9),c=sel%9;
+  if(given[r][c])return;
+  undo.push({r,c,old:grid[r][c],notes:notes[r][c].slice(),mistakes:mistakes});
+  grid[r][c]=0;notes[r][c]=[];render();save();
+};
+$('undoBtn').onclick=()=>{
+  if(!undo.length)return;const a=undo.pop();
+  grid[a.r][a.c]=a.old;notes[a.r][a.c]=a.notes;mistakes=a.mistakes;
+  $('mistakes').textContent=mistakes;render();save();
+};
+$('hintBtn').onclick=()=>{
+  if(sel===null||done)return;const r=Math.floor(sel/9),c=sel%9;
+  if(given[r][c])return;
+  undo.push({r,c,old:grid[r][c],notes:notes[r][c].slice(),mistakes:mistakes});
+  grid[r][c]=sol[r][c];notes[r][c]=[];render();save();msg('已填入正确数字');checkWin();
+};
+$('newBtn').onclick=()=>{if(confirm('开始新的一局？当前进度会丢失。'))start(level);};
+$('againBtn').onclick=()=>start(level);
+function checkWin(){
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(grid[r][c]!==sol[r][c])return;
+  done=true;clearInterval(timer);$('winText').innerHTML='用时 <b>'+fmt(secs)+'</b>，错误 '+mistakes+' 次。';
+  $('over').classList.add('on');save();
+}
+if(!load())start('easy');
+})();
+</script>
+</body>
+</html>

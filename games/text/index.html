@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>文字游戏 · 午夜站台</title>
+<style>
+  :root{
+    --bg:#080b12;--panel:#121826;--line:#242e42;
+    --text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;
+    --accent:#e5484d;--cyan:#5cc8e8;--amber:#e8b45c;--green:#6ec9a4;--violet:#a98be8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{
+    background:
+      radial-gradient(ellipse 70% 45% at 15% -5%,rgba(169,139,232,.1),transparent 70%),
+      radial-gradient(ellipse 60% 40% at 90% 105%,rgba(229,72,77,.08),transparent 70%),var(--bg);
+    min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+    padding:0 20px calc(40px + env(safe-area-inset-bottom))}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:10;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.015) 0 1px,transparent 1px 3px);opacity:.5}
+  .wrap{width:100%;max-width:860px}
+  a.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;
+    font-size:12px;padding:18px 0 0;font-family:ui-monospace,monospace}
+  a.back:hover{color:var(--violet)}
+  header{padding:40px 0 30px;text-align:center}
+  .time{font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;font-size:12px;letter-spacing:.3em;
+    color:var(--violet);margin-bottom:18px}
+  h1{font-family:Georgia,"Songti SC","SimSun",serif;font-size:34px;letter-spacing:.16em;margin:0 0 12px;font-weight:600}
+  .sub{color:var(--muted);font-size:13px;line-height:1.9;margin:0 auto;max-width:460px}
+  .note{margin-top:16px;font-family:ui-monospace,monospace;font-size:10.5px;color:var(--dim);
+    border:1px solid var(--line);border-radius:6px;padding:6px 12px;display:inline-block}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .card{position:relative;display:block;text-decoration:none;color:inherit;
+    background:linear-gradient(155deg,var(--panel),#0c1019);border:1px solid var(--line);
+    border-radius:16px;padding:28px 26px 24px;transition:.22s;overflow:hidden}
+  .card::before{content:"";position:absolute;top:0;left:26px;right:26px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--tone),transparent);opacity:.75}
+  .card:hover{border-color:var(--tone);transform:translateY(-4px);box-shadow:0 20px 50px rgba(0,0,0,.4)}
+  .card .icon{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;margin-bottom:20px;
+    background:color-mix(in srgb,var(--tone) 14%,transparent);
+    border:1px solid color-mix(in srgb,var(--tone) 32%,transparent);color:var(--tone);font-size:21px}
+  .card .path{font-family:ui-monospace,monospace;font-size:10px;color:var(--tone);letter-spacing:.08em;margin-bottom:9px}
+  .card h2{font-family:Georgia,"Songti SC",serif;font-size:21px;letter-spacing:.05em;margin:0 0 9px;font-weight:600}
+  .card p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.85;min-height:46px}
+  .card .meta{display:flex;gap:7px;margin-top:20px;flex-wrap:wrap}
+  .card .tag{font-family:ui-monospace,monospace;font-size:10px;color:var(--dim);
+    border:1px solid var(--line);border-radius:5px;padding:4px 8px}
+  .card .go-row{display:flex;align-items:center;margin-top:16px}
+  .card .go{margin-left:auto;color:var(--tone);font-size:18px;transition:.2s}
+  .card:hover .go{transform:translateX(4px)}
+
+  footer{margin-top:40px;text-align:center;color:var(--dim);font-size:11px;
+    font-family:ui-monospace,monospace;line-height:2}
+  @media(max-width:640px){
+    header{padding:30px 0 24px}h1{font-size:27px}
+    .grid{grid-template-columns:1fr;gap:14px}.card{padding:23px 21px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← 返回游戏合集</a>
+  <header>
+    <div class="time">BRANCH · 文字游戏</div>
+    <h1>选择你的故事</h1>
+    <p class="sub">六个可以读、可以玩、可以改写结局的故事。<br>每个选择都算数，有些结局要绕很远才能碰到。</p>
+    <div class="note">纯前端 · 进度与结局收藏保存在本机</div>
+  </header>
+
+  <div class="grid">
+    <a class="card" href="../last-train/" style="--tone:var(--accent)">
+      <div class="icon">🚇</div>
+      <div class="path">/last-train</div>
+      <h2>最后一班地铁</h2>
+      <p>凌晨 1:47 的末班车厢，只有三个人。拼凑三年前那场事故的真相。</p>
+      <div class="meta"><span class="tag">悬疑解谜</span><span class="tag">4 种结局</span><span class="tag">7 条线索</span></div>
+      <div class="go-row"><span class="go">→</span></div>
+    </a>
+
+    <a class="card" href="../lifeline/" style="--tone:var(--cyan)">
+      <div class="icon">📱</div>
+      <div class="path">/lifeline</div>
+      <h2>信号 · 生命线</h2>
+      <p>短信式互动小说。你是山上被困者唯一的联络人，用回复决定他能否撑到天亮。</p>
+      <div class="meta"><span class="tag">互动小说</span><span class="tag">5 种结局</span><span class="tag">19 节点</span></div>
+      <div class="go-row"><span class="go">→</span></div>
+    </a>
+
+    <a class="card" href="escape/" style="--tone:var(--violet)">
+      <div class="icon">✉️</div>
+      <div class="path">/text/escape</div>
+      <h2>第七封信</h2>
+      <p>一间上锁的书房，七封信，第六封说"别信自己"，第七封是空白的。</p>
+      <div class="meta"><span class="tag">密室解谜</span><span class="tag">3 种结局</span><span class="tag">6 条线索</span></div>
+      <div class="go-row"><span class="go">→</span></div>
+    </a>
+
+    <a class="card" href="horror/" style="--tone:var(--accent)">
+      <div class="icon">👁️</div>
+      <div class="path">/text/horror</div>
+      <h2>别回头</h2>
+      <p>23:47，门缝塞进一张纸条。字迹是你的，但你没写过。镜子里的你慢了半拍。</p>
+      <div class="meta"><span class="tag">悬疑恐怖</span><span class="tag">4 种结局</span><span class="tag">6 条线索</span></div>
+      <div class="go-row"><span class="go">→</span></div>
+    </a>
+
+    <a class="card" href="store/" style="--tone:var(--amber)">
+      <div class="icon">🏪</div>
+      <div class="path">/text/store</div>
+      <h2>深夜便利店</h2>
+      <p>角色扮演。店长说凌晨三点别开门，可三位客人各有各的理由。体力、善意与诡异会左右结局。</p>
+      <div class="meta"><span class="tag">角色扮演</span><span class="tag">4 种结局</span><span class="tag">数值系统</span></div>
+      <div class="go-row"><span class="go">→</span></div>
+    </a>
+
+    <a class="card" href="taxi/" style="--tone:var(--cyan)">
+      <div class="icon">🌧️</div>
+      <div class="path">/text/taxi</div>
+      <h2>雨夜出租车</h2>
+      <p>乘客报出去一个不存在的地址。后视镜里的他，和十年前那场事故有关。</p>
+      <div class="meta"><span class="tag">分支剧情</span><span class="tag">5 种结局</span><span class="tag">6 条线索</span></div>
+      <div class="go-row"><span class="go">→</span></div>
+    </a>
+  </div>
+
+  <footer>
+    <div>数字键 1—9 快速选择 · 点击正文跳过打字</div>
+    <div>右上角可随时查看线索本与结局收藏</div>
+  </footer>
+</div>
+</body>
+</html>

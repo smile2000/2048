@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>六边形 2048</title>
+<style>
+  :root{--bg:#080b12;--panel:#121826;--line:#242e42;--text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;--accent:#e5484d;--cyan:#5cc8e8;--amber:#e8b45c}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;min-height:100dvh;padding:0 14px calc(30px + env(safe-area-inset-bottom));background:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(229,180,92,.09),transparent 70%),var(--bg)}
+  .wrap{max-width:420px;margin:0 auto}
+  a.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:12px;padding:16px 0 0;font-family:ui-monospace,monospace}
+  a.back:hover{color:var(--amber)}
+  header{display:flex;align-items:flex-end;justify-content:space-between;padding:16px 0 8px;gap:10px}
+  h1{font-family:Georgia,serif;font-size:23px;letter-spacing:.08em;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:11px;margin:0;line-height:1.6}
+  .scoreBox{text-align:right;flex:0 0 auto;font-family:ui-monospace,monospace}
+  .scoreBox .v{font-size:23px;color:var(--amber);line-height:1}
+  .scoreBox .l{font-size:9.5px;color:var(--dim);margin-top:4px}
+  .bar{display:flex;gap:7px;margin:12px 0 4px}
+  .btn{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:8px 11px;font-size:11.5px;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:var(--amber);color:var(--amber)}
+  .stage{position:relative;width:100%;aspect-ratio:400/380;background:radial-gradient(ellipse at center,#121a2a,#0b1019);border:1px solid var(--line);border-radius:14px;overflow:hidden;touch-action:none}
+  .hex{position:absolute;display:grid;place-items:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+    font-family:ui-monospace,monospace;font-weight:600;font-size:15px;color:#06101a;transition:background .12s}
+  .empty{background:rgba(255,255,255,.035)}
+  .v2{background:#cfd8e8}.v4{background:#e8d9bc}.v8{background:#f2c14e}.v16{background:#f0a35c}
+  .v32{background:#ec7f6a}.v64{background:#e35f7a;color:#fff}.v128{background:#c65fa8;color:#fff}
+  .v256{background:#9a6bd8;color:#fff}.v512{background:#5cc8e8}.v1024{background:#6ec9a4}
+  .vbig{background:#e5484d;color:#fff;font-size:12px}
+  .over{position:absolute;inset:0;background:rgba(6,9,15,.88);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .over.on{display:flex}
+  .over .t{font-family:Georgia,serif;font-size:24px;margin-bottom:8px}
+  .over .s{color:var(--muted);font-size:12.5px;line-height:2}
+  .over .s b{color:var(--amber);font-family:ui-monospace,monospace;font-size:19px}
+  .over .btn{margin-top:16px;color:var(--amber);border-color:rgba(232,180,92,.5)}
+  .tip{color:var(--dim);font-size:10.5px;font-family:ui-monospace,monospace;line-height:1.9;margin-top:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← 返回游戏合集</a>
+  <header>
+    <div><h1>HEX 2048</h1><p class="sub">六个方向，37 个格子。<br>比方形棋盘多两条出路，也多两个陷阱。</p></div>
+    <div class="scoreBox"><div class="v" id="score">0</div><div class="l">最高 <span id="best">0</span></div></div>
+  </header>
+  <div class="bar"><button class="btn" id="undoBtn">撤销</button><button class="btn" id="newBtn">新游戏</button></div>
+  <div class="stage" id="stage"><div class="over" id="over">
+    <div class="t">无处可走</div><div class="s">得分 <b id="final">0</b><br>最高 <span id="finalBest">0</span></div>
+    <button class="btn" id="againBtn">再来一局</button></div></div>
+  <div class="tip">Q W E / A S D 对应六个方向 · 方向键也可用<br>手机在棋盘上滑动 · 相同数字合并，每步只合一次</div>
+</div>
+<script>
+(function(){
+'use strict';
+const R=3,SIZE=32,SQ3=Math.sqrt(3),CX=200,CY=190,$=id=>document.getElementById(id),stage=$('stage');
+const DIRS=[
+ {q:1,r:0,k:'d'},{q:0,r:1,k:'s'},{q:-1,r:1,k:'a'},
+ {q:-1,r:0,k:'q'},{q:0,r:-1,k:'w'},{q:1,r:-1,k:'e'}
+];
+const key=(q,r)=>q+','+r;
+const cells=[],cellSet=new Set();
+for(let q=-R;q<=R;q++)for(let r=-R;r<=R;r++){
+  if(Math.abs(q+r)>R)continue;
+  cells.push({q,r});cellSet.add(key(q,r));
+}
+const px=c=>({x:SQ3*SIZE*(c.q+c.r/2),y:1.5*SIZE*c.r});
+let board=new Map(),score=0,best=0,prev=null,over=false;
+try{best=Number(localStorage.getItem('hex2048_best_v1')||0);}catch(e){}
+
+function buildCells(){
+  stage.querySelectorAll('.hex').forEach(x=>x.remove());
+  for(const c of cells){
+    const p=px(c),el=document.createElement('div');el.className='hex empty';
+    el.style.width=(SQ3*SIZE)+'px';el.style.height=(2*SIZE)+'px';
+    el.style.left=(CX+p.x-SQ3*SIZE/2)+'px';el.style.top=(CY+p.y-SIZE)+'px';
+    el.dataset.k=key(c.q,c.r);stage.insertBefore(el,$('over'));
+  }
+}
+function lines(dir){
+  const out=[];
+  for(const c of cells){
+    if(cellSet.has(key(c.q-dir.q,c.r-dir.r)))continue;
+    const chain=[];let cur=c,guard=0;
+    while(cellSet.has(key(cur.q,cur.r))&&guard++<20){
+      chain.push(cur);cur={q:cur.q+dir.q,r:cur.r+dir.r};
+    }
+    out.push(chain);
+  }
+  return out;
+}
+function spawn(){
+  const free=cells.filter(c=>!board.has(key(c.q,c.r)));
+  if(!free.length)return;
+  const c=free[Math.floor(Math.random()*free.length)];
+  board.set(key(c.q,c.r),Math.random()<0.9?2:4);
+}
+function move(dir){
+  if(over)return;
+  const snap=JSON.stringify({b:[...board.entries()],s:score});
+  let changed=false,gain=0;const nb=new Map();
+  for(const chain of lines(dir)){
+    const vals=chain.map(c=>board.get(key(c.q,c.r))||0).filter(v=>v>0),res=[];
+    for(let i=0;i<vals.length;i++){
+      if(i+1<vals.length&&vals[i]===vals[i+1]){const v=vals[i]*2;res.push(v);gain+=v;i++;}
+      else res.push(vals[i]);
+    }
+    const start=chain.length-res.length;
+    chain.forEach((c,i)=>{
+      const v=i<start?0:res[i-start];
+      const k=key(c.q,c.r),old=board.get(k)||0;
+      if(old!==v)changed=true;
+      if(v)nb.set(k,v);
+    });
+  }
+  if(!changed)return;
+  board=nb;prev=snap;score+=gain;
+  if(score>best){best=score;try{localStorage.setItem('hex2048_best_v1',String(best));}catch(e){}}
+  spawn();render();
+  if(!canMove()){over=true;$('final').textContent=score;$('finalBest').textContent=best;$('over').classList.add('on');}
+}
+function canMove(){
+  for(const d of DIRS){
+    let changed=false;
+    for(const chain of lines(d)){
+      const vals=chain.map(c=>board.get(key(c.q,c.r))||0).filter(v=>v>0),res=[];
+      for(let i=0;i<vals.length;i++){
+        if(i+1<vals.length&&vals[i]===vals[i+1]){res.push(vals[i]*2);i++;}
+        else res.push(vals[i]);
+      }
+      const st=chain.length-res.length;
+      chain.forEach((c,i)=>{const v=i<st?0:res[i-st];if((board.get(key(c.q,c.r))||0)!==v)changed=true;});
+    }
+    if(changed)return true;
+  }
+  return false;
+}
+function render(){
+  stage.querySelectorAll('.hex').forEach(el=>{
+    const v=board.get(el.dataset.k)||0;
+    el.className='hex'+(v?' v'+v+(v>=1024?' vbig':''):' empty');
+    el.textContent=v||'';
+    if(v>=128&&v<1024)el.style.color='#fff';
+    else el.style.color='#06101a';
+  });
+  $('score').textContent=score;$('best').textContent=best;
+}
+function reset(){
+  board=new Map();score=0;prev=null;over=false;
+  for(let i=0;i<3;i++)spawn();
+  $('over').classList.remove('on');render();
+}
+const KEYMAP={q:DIRS[3],w:DIRS[4],e:DIRS[5],a:DIRS[2],s:DIRS[1],d:DIRS[0],
+  arrowleft:DIRS[3],arrowup:DIRS[4],arrowright:DIRS[0],arrowdown:DIRS[1]};
+document.addEventListener('keydown',e=>{
+  const d=KEYMAP[e.key.toLowerCase()];
+  if(d){e.preventDefault();move(d);}
+});
+let sx=0,sy=0;
+const angles=DIRS.map(d=>{const p=px(d);return Math.atan2(p.y,p.x);});
+stage.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+stage.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.hypot(dx,dy)<22)return;
+  const a=Math.atan2(dy,dx);let bestI=0,bestD=9;
+  angles.forEach((t,i)=>{let d=Math.abs(((a-t+Math.PI*3)%(Math.PI*2))-Math.PI);if(d<bestD){bestD=d;bestI=i;}});
+  move(DIRS[bestI]);
+},{passive:true});
+$('newBtn').onclick=reset;$('againBtn').onclick=reset;
+$('undoBtn').onclick=()=>{
+  if(!prev||over)return;
+  const s=JSON.parse(prev);board=new Map(s.b);score=s.s;prev=null;render();
+};
+buildCells();reset();
+})();
+</script>
+</body>
+</html>

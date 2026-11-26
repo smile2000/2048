@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>合成大西瓜</title>
+<style>
+  :root{--bg:#080b12;--panel:#121826;--line:#242e42;--text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;--accent:#e5484d;--cyan:#5cc8e8;--amber:#e8b45c;--green:#6ec9a4}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;min-height:100dvh;padding:0 16px calc(30px + env(safe-area-inset-bottom));
+    background:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(229,72,77,.1),transparent 70%),var(--bg)}
+  .wrap{max-width:420px;margin:0 auto}
+  a.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:12px;padding:16px 0 0;font-family:ui-monospace,monospace}
+  a.back:hover{color:var(--accent)}
+  header{display:flex;align-items:flex-end;justify-content:space-between;padding:16px 0 12px;gap:10px}
+  h1{font-family:Georgia,"Songti SC",serif;font-size:25px;letter-spacing:.08em;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:11.5px;margin:0}
+  .scoreBox{text-align:right;flex:0 0 auto}
+  .scoreBox .v{font-family:ui-monospace,monospace;font-size:25px;color:var(--amber);line-height:1}
+  .scoreBox .l{font-family:ui-monospace,monospace;font-size:10px;color:var(--dim);margin-top:4px}
+  .stage{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#101725,#0a0e17)}
+  canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+  .next{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
+  .next .ball{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:18px;border:1px solid var(--line);background:var(--panel)}
+  .btns{display:flex;gap:7px}
+  .btn{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:8px 11px;font-size:11.5px;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .tip{color:var(--dim);font-size:10.5px;font-family:ui-monospace,monospace;line-height:1.9;margin-top:14px;text-align:center}
+  .over{position:absolute;inset:0;background:rgba(6,9,15,.88);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+  .over.on{display:flex}
+  .over .t{font-family:Georgia,"Songti SC",serif;font-size:26px;margin-bottom:10px}
+  .over .s{color:var(--muted);font-size:13px;line-height:2}
+  .over .s b{color:var(--amber);font-family:ui-monospace,monospace;font-size:20px}
+  .over .btn{margin-top:20px;color:var(--cyan);border-color:rgba(92,200,232,.5)}
+  @media(max-width:400px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← 返回游戏合集</a>
+  <header>
+    <div><h1>合成大西瓜</h1><p class="sub">相同水果碰在一起就会变大</p></div>
+    <div class="scoreBox"><div class="v" id="score">0</div><div class="l">最高 <span id="best">0</span></div></div>
+  </header>
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div class="over" id="over">
+      <div class="t">堆到线了</div>
+      <div class="s">本局得分 <b id="finalScore">0</b><br>最高纪录 <span id="finalBest">0</span></div>
+      <button class="btn" id="againBtn">再来一局</button>
+    </div>
+  </div>
+  <div class="bar">
+    <div class="next">下一个 <span class="ball" id="nextBall">🍇</span></div>
+    <div class="btns"><button class="btn" id="undoBtn">撤销一次</button><button class="btn" id="newBtn">重新开始</button></div>
+  </div>
+  <div class="tip">移动鼠标 / 手指瞄准，点击投放 · 合成到西瓜就是胜利<br>撤销仅限一次 · 分数保存在本机</div>
+</div>
+<script>
+(function(){
+'use strict';
+const LV=[
+ {r:15,e:'🍇',n:'葡萄',s:1},
+ {r:19,e:'🍒',n:'樱桃',s:3},
+ {r:25,e:'🍊',n:'橘子',s:6},
+ {r:31,e:'🍋',n:'柠檬',s:10},
+ {r:38,e:'🥝',n:'猕猴桃',s:15},
+ {r:47,e:'🍅',n:'番茄',s:21},
+ {r:57,e:'🍑',n:'桃子',s:28},
+ {r:69,e:'🍍',n:'菠萝',s:36},
+ {r:84,e:'🍉',n:'西瓜',s:50}
+];
+const W=360,H=520,G=0.22,FLOOR=H-8,DANGER=105;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const $=id=>document.getElementById(id);
+let fruits=[],score=0,best=0,next=0,aim=W/2,over=false,dangerT=0,undoUsed=false,snapshot=null,lastDrop=0,raf=null;
+try{best=Number(localStorage.getItem('suika_best_v1')||0);}catch(e){}
+
+function setup(){
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=W*dpr;cv.height=H*dpr;cv.style.height=(H/W*cv.clientWidth)+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function reset(){
+  fruits=[];score=0;over=false;dangerT=0;undoUsed=false;snapshot=null;
+  next=Math.floor(Math.random()*5);aim=W/2;
+  $('over').classList.remove('on');$('score').textContent='0';$('nextBall').textContent=LV[next].e;
+  draw();
+}
+function newFruit(x,y,lv,vx,vy){return {x:x,y:y,lv:lv,r:LV[lv].r,vx:vx||0,vy:vy||0,dead:false};}
+function addScore(n){score+=n;$('score').textContent=score;if(score>best){best=score;$('best').textContent=best;try{localStorage.setItem('suika_best_v1',String(best));}catch(e){}}}
+
+function drop(){
+  if(over||Date.now()-lastDrop<380)return;
+  if(!undoUsed)snapshot=JSON.stringify({fruits:fruits.map(f=>({x:f.x,y:f.y,lv:f.lv,vx:f.vx,vy:f.vy})),score:score,next:next});
+  const r=LV[next].r;
+  fruits.push(newFruit(Math.max(r+2,Math.min(W-r-2,aim)),42,next,0,1.2));
+  next=Math.floor(Math.random()*5);$('nextBall').textContent=LV[next].e;
+  lastDrop=Date.now();
+}
+function merge(a,b){
+  const lv=a.lv+1;
+  if(lv>=LV.length)return false;
+  a.dead=b.dead=true;
+  fruits.push(newFruit((a.x+b.x)/2,(a.y+b.y)/2,lv,(a.vx+b.vx)/2,(a.vy+b.vy)/2-1.6));
+  addScore(LV[lv].s);
+  return true;
+}
+function step(){
+  for(const f of fruits){f.vy+=G;f.x+=f.vx;f.y+=f.vy;f.vx*=0.996;}
+  const n=fruits.length;
+  for(let iter=0;iter<3;iter++){
+    for(let i=0;i<n;i++){
+      const a=fruits[i];if(a.dead)continue;
+      for(let j=i+1;j<n;j++){
+        const b=fruits[j];if(b.dead)continue;
+        let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=a.r+b.r;
+        if(d>=min)continue;
+        if(d<0.01){dx=0.1;dy=0;d=0.1;}
+        const nx=dx/d,ny=dy/d;
+        if(a.lv===b.lv&&!a.dead&&!b.dead&&iter===0){if(merge(a,b)){a.dead=b.dead=true;break;}continue;}
+        const ma=a.r*a.r,mb=b.r*b.r,tot=ma+mb,ov=min-d;
+        a.x-=nx*ov*(mb/tot);a.y-=ny*ov*(mb/tot);
+        b.x+=nx*ov*(ma/tot);b.y+=ny*ov*(ma/tot);
+        const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+        if(rv<0){const imp=-(1+0.12)*rv/(1/ma+1/mb);a.vx-=imp*nx/ma;a.vy-=imp*ny/ma;b.vx+=imp*nx/mb;b.vy+=imp*ny/mb;}
+      }
+    }
+    for(const f of fruits){
+      if(f.dead)continue;
+      if(f.x<f.r){f.x=f.r;f.vx=Math.abs(f.vx)*0.3;}
+      if(f.x>W-f.r){f.x=W-f.r;f.vx=-Math.abs(f.vx)*0.3;}
+      if(f.y>FLOOR-f.r){f.y=FLOOR-f.r;f.vy=-Math.abs(f.vy)*0.16;f.vx*=0.9;}
+    }
+  }
+  fruits=fruits.filter(f=>!f.dead);
+  let danger=false;
+  for(const f of fruits){if(f.y-f.r<DANGER&&Math.abs(f.vy)<1.6){danger=true;break;}}
+  dangerT=danger?dangerT+1:0;
+  if(dangerT>115)gameOver();
+}
+function gameOver(){
+  over=true;$('finalScore').textContent=score;$('finalBest').textContent=best;$('over').classList.add('on');
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();ctx.setLineDash([5,6]);ctx.strokeStyle='rgba(229,72,77,.45)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(12,DANGER);ctx.lineTo(W-12,DANGER);ctx.stroke();ctx.restore();
+  ctx.fillStyle='rgba(229,72,77,.5)';ctx.font='10px ui-monospace,monospace';ctx.fillText('DANGER LINE',14,DANGER-6);
+  if(!over){
+    ctx.save();ctx.setLineDash([3,7]);ctx.strokeStyle='rgba(92,200,232,.22)';
+    ctx.beginPath();ctx.moveTo(aim,48);ctx.lineTo(aim,H);ctx.stroke();ctx.restore();
+    drawFruit(aim,40,LV[next].r,LV[next].e,LV[next].n);
+  }
+  for(const f of fruits)drawFruit(f.x,f.y,f.r,LV[f.lv].e,LV[f.lv].n);
+}
+function drawFruit(x,y,r,emoji,name){
+  const g=ctx.createRadialGradient(x-r*.35,y-r*.4,r*.15,x,y,r);
+  g.addColorStop(0,'rgba(255,255,255,.28)');g.addColorStop(.6,'rgba(255,255,255,.04)');g.addColorStop(1,'rgba(0,0,0,.22)');
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.14)';ctx.lineWidth=1;ctx.stroke();
+  ctx.font=Math.round(r*1.15)+'px system-ui,"Apple Color Emoji","Segoe UI Emoji"';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(emoji,x,y+1);
+}
+function loop(){if(!over){step();}draw();raf=requestAnimationFrame(loop);}
+function pos(e){
+  const t=e.touches?e.touches[0]:e,r=cv.getBoundingClientRect();
+  aim=Math.max(LV[next].r+2,Math.min(W-LV[next].r-2,(t.clientX-r.left)/r.width*W));
+}
+cv.addEventListener('mousemove',pos);
+cv.addEventListener('mouseleave',()=>{aim=Math.max(LV[next].r+2,Math.min(W-LV[next].r-2,aim));});
+cv.addEventListener('mousedown',e=>{pos(e);drop();});
+cv.addEventListener('touchmove',e=>{e.preventDefault();pos(e);},{passive:false});
+cv.addEventListener('touchend',e=>{e.preventDefault();drop();},{passive:false});
+$('newBtn').onclick=reset;
+$('againBtn').onclick=reset;
+$('undoBtn').onclick=()=>{
+  if(over||undoUsed||!snapshot){return;}
+  try{
+    const s=JSON.parse(snapshot);
+    fruits=s.fruits.map(f=>newFruit(f.x,f.y,f.lv,f.vx,f.vy));
+    score=s.score;next=s.next;undoUsed=true;dangerT=0;
+    $('score').textContent=score;$('nextBall').textContent=LV[next].e;$('undoBtn').textContent='已撤销';
+  }catch(e){}
+};
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft')aim=Math.max(20,aim-18);
+  if(e.key==='ArrowRight')aim=Math.min(W-20,aim+18);
+  if(e.key===' '){e.preventDefault();drop();}
+});
+window.addEventListener('resize',setup);
+setup();reset();loop();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>跳转中… · 大黄鱼游乐场</title>
+<meta http-equiv="refresh" content="0;url=/">
+<style>
+  html,body{background:#080b12;color:#e5eaf3;font-family:-apple-system,"PingFang SC",sans-serif;
+    display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center}
+  a{color:#5cc8e8}
+</style>
+</head>
+<body>
+<div>
+  <p>页面已归入新的分类目录，正在跳转…</p>
+  <p><a id="link" href="/">如果没有自动跳转，点这里返回首页</a></p>
+</div>
+<script>
+(function(){
+  // 站点改版：旧根目录路径 -> games/ 或 tools/ 下的新位置
+  const MAP={
+    '/text/':'/games/text/',
+    '/text/escape/':'/games/text/escape/',
+    '/text/horror/':'/games/text/horror/',
+    '/text/store/':'/games/text/store/',
+    '/text/taxi/':'/games/text/taxi/'
+  };
+  ['2048','cat','dino','hex2048','last-train','lifeline','memory','minesweeper','sudoku','suika','threes']
+    .forEach(x=>{MAP['/'+x+'/']='/games/'+x+'/';});
+  ['countdown','weather','news','food']
+    .forEach(x=>{MAP['/'+x+'/']='/tools/'+x+'/';});
+
+  // 规范化：去掉 query/hash，补末尾斜杠
+  let p=location.pathname.split('?')[0].split('#')[0];
+  if(!p.endsWith('/'))p+='/';
+  const target=MAP[p]||'/';
+  if(target!=='/'){
+    location.replace(target+location.hash);
+  }else{
+    document.getElementById('link').href='/';
+  }
+})();
+</script>
+</body>
+</html>

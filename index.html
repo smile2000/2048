@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>游戏合集 · 大黄鱼游乐场</title>
+<style>
+  :root{--bg:#080b12;--panel:#121826;--line:#242e42;--text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;
+    --accent:#e5484d;--cyan:#5cc8e8;--gold:#e8b45c;--amber:#e8b45c;--green:#6ec9a4;--violet:#a98be8;--pink:#e890a8}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  body{background:radial-gradient(ellipse 70% 45% at 15% -5%,rgba(92,200,232,.08),transparent 70%),
+      radial-gradient(ellipse 60% 40% at 90% 105%,rgba(229,72,77,.07),transparent 70%),var(--bg);
+    min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:0 20px calc(40px + env(safe-area-inset-bottom))}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:10;background:repeating-linear-gradient(0deg,rgba(255,255,255,.015) 0 1px,transparent 1px 3px);opacity:.5}
+  .wrap{width:100%;max-width:920px}
+  header{padding:56px 0 24px;text-align:center}
+  .time{font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;font-size:12px;letter-spacing:.3em;color:var(--accent);margin-bottom:18px;
+    display:flex;align-items:center;justify-content:center;gap:10px}
+  .time::before,.time::after{content:"";width:34px;height:1px;background:linear-gradient(90deg,transparent,var(--accent))}
+  .time::after{background:linear-gradient(90deg,var(--accent),transparent)}
+  h1{font-family:Georgia,"Songti SC","SimSun",serif;font-size:34px;letter-spacing:.14em;margin:0 0 12px;font-weight:600}
+  .sub{color:var(--muted);font-size:13px;line-height:1.9;margin:0 auto;max-width:460px}
+  .back{display:inline-block;margin-top:18px;font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:6px 12px}
+  .back:hover{color:var(--cyan);border-color:var(--cyan)}
+  .tools{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:8px 0 20px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--line);
+    border-radius:20px;padding:8px 14px;cursor:pointer;transition:.18s}
+  .tab:hover{color:var(--text);border-color:#394760}
+  .tab.on{color:var(--bg);background:var(--cyan);border-color:var(--cyan)}
+  .tab .n{opacity:.65;margin-left:5px}
+  .search{font:inherit;font-size:12px;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:170px;outline:none}
+  .search:focus{border-color:var(--cyan)}
+  .count{font-family:ui-monospace,monospace;font-size:11px;color:var(--dim);margin-bottom:12px;letter-spacing:.06em}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card{position:relative;display:block;text-decoration:none;color:inherit;background:linear-gradient(155deg,var(--panel),#0c1019);
+    border:1px solid var(--line);border-radius:14px;padding:22px 20px 20px;transition:.2s;overflow:hidden}
+  .card::before{content:"";position:absolute;top:0;left:20px;right:20px;height:1px;background:linear-gradient(90deg,transparent,var(--tone),transparent);opacity:.7}
+  .card:hover{border-color:var(--tone);transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,.35)}
+  .card .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .card .icon{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:20px;
+    background:color-mix(in srgb,var(--tone) 14%,transparent);border:1px solid color-mix(in srgb,var(--tone) 32%,transparent);color:var(--tone)}
+  .card .kind{font-family:ui-monospace,monospace;font-size:10px;color:var(--dim);letter-spacing:.1em}
+  .card .path{font-family:ui-monospace,monospace;font-size:10px;color:var(--tone);letter-spacing:.06em;margin-bottom:8px}
+  .card h2{font-family:Georgia,"Songti SC",serif;font-size:18px;letter-spacing:.04em;margin:0 0 8px;font-weight:600}
+  .card p{margin:0;color:var(--muted);font-size:12px;line-height:1.75;min-height:42px}
+  .card .meta{display:flex;gap:6px;margin-top:16px;flex-wrap:wrap}
+  .card .tag{font-family:ui-monospace,monospace;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:5px;padding:3px 7px}
+  .card.feature{background:linear-gradient(155deg,rgba(169,139,232,.16),#0c1019);border-color:rgba(169,139,232,.4)}
+  .empty{text-align:center;color:var(--dim);font-size:13px;padding:60px 0}
+  footer{margin-top:44px;text-align:center;color:var(--dim);font-size:11px;font-family:ui-monospace,monospace;line-height:2}
+  @media(max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}header{padding:40px 0 20px}h1{font-size:28px}}
+  @media(max-width:500px){.grid{grid-template-columns:1fr}.tools{justify-content:center}.search{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="time">PLATFORM 01 · 大黄鱼游乐场</div>
+    <h1>游戏合集</h1>
+    <p class="sub">十六款可以直接在浏览器里玩的游戏。<br>文字、数字、益智、休闲——挑一个，在这池子里游一会儿。</p>
+    <a class="back" href="../">← 返回首页</a>
+  </header>
+
+  <div class="tools">
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-cat="all">全部<span class="n">17</span></button>
+      <button class="tab" data-cat="text">文字类<span class="n">7</span></button>
+      <button class="tab" data-cat="number">数字类<span class="n">3</span></button>
+      <button class="tab" data-cat="puzzle">益智类<span class="n">4</span></button>
+      <button class="tab" data-cat="casual">休闲类<span class="n">3</span></button>
+    </div>
+    <input class="search" id="search" type="search" placeholder="搜索游戏…" aria-label="搜索游戏">
+  </div>
+  <div class="count" id="count"></div>
+  <div class="grid" id="grid"></div>
+  <footer>
+    <div>GITHUB PAGES · 纯前端 · 无需登录</div>
+    <div>所有进度保存在各自浏览器本地</div>
+  </footer>
+</div>
+<script>
+(function(){
+  const GAMES=[
+    {name:'文字游戏目录',path:'text/',cat:'text',icon:'📖',tone:'violet',desc:'六个互动故事的入口：解谜、恐怖、角色扮演、互动小说。点进去再挑一个。',tags:['分类入口','6 个故事'],feature:true},
+    {name:'最后一班地铁',path:'last-train/',cat:'text',icon:'🚇',tone:'accent',desc:'凌晨 1:47 的末班地铁，三个乘客，一个关于时间循环的悬疑故事。',tags:['14 节点','4 结局']},
+    {name:'信号 · 生命线',path:'lifeline/',cat:'text',icon:'💬',tone:'cyan',desc:'短信式互动小说。你是唯一的联络人，用回复决定被困者的命运。',tags:['短信界面','5 结局']},
+    {name:'第七封信',path:'text/escape/',cat:'text',icon:'🔐',tone:'gold',desc:'密室解谜。七封信里藏着逃离的线索，找到它们的顺序。',tags:['密室解谜','3 结局']},
+    {name:'别回头',path:'text/horror/',cat:'text',icon:'🕯️',tone:'accent',desc:'悬疑恐怖。深夜的走廊里，有些声音不该回应。',tags:['悬疑恐怖','4 结局']},
+    {name:'深夜便利店',path:'text/store/',cat:'text',icon:'🏪',tone:'green',desc:'角色扮演。你是便利店店员，体力、善意与诡异三个数值决定结局。',tags:['角色扮演','数值系统']},
+    {name:'雨夜出租车',path:'text/taxi/',cat:'text',icon:'🌧️',tone:'cyan',desc:'分支剧情。三位乘客，一段雨夜的路，五种不同的终点。',tags:['分支剧情','5 结局']},
+    {name:'2048',path:'2048/',cat:'number',icon:'🔢',tone:'cyan',desc:'滑动方块，合并相同数字，一路冲到 2048。能撤销、能换主题。',tags:['数字合并','键盘+触屏']},
+    {name:'Threes',path:'threes/',cat:'number',icon:'3️⃣',tone:'cyan',desc:'1 + 2 = 3，3 + 3 = 6。规则更克制，策略反而更深。',tags:['数字合并','4×4']},
+    {name:'六边形 2048',path:'hex2048/',cat:'number',icon:'⬡',tone:'gold',desc:'37 格、六个滑动方向。换个棋盘形状，难度完全不一样。',tags:['六向滑动','QWEASD']},
+    {name:'扫雷',path:'minesweeper/',cat:'puzzle',icon:'💣',tone:'green',desc:'三档难度，另有每日挑战——同一天所有人面对同一张雷区。',tags:['逻辑推理','每日一局']},
+    {name:'数独',path:'sudoku/',cat:'puzzle',icon:'9️⃣',tone:'cyan',desc:'随机出题且保证唯一解，带笔记、提示、撤销和计时。',tags:['唯一解','笔记模式']},
+    {name:'记忆翻牌',path:'memory/',cat:'puzzle',icon:'🃏',tone:'violet',desc:'翻开两张找配对，三档牌面大小，记录最少步数与用时。',tags:['翻牌配对','3 档难度']},
+    {name:'围住小猫',path:'cat/',cat:'puzzle',icon:'🐱',tone:'pink',desc:'复刻经典 Chat Noir：11×11 错列棋盘、8 块随机石头，小猫会算最短路径逃向边缘。围死它，别让它溜走。',tags:['原版复刻','随机障碍','可撤销']},
+    {name:'合成大西瓜',path:'suika/',cat:'casual',icon:'🍉',tone:'accent',desc:'投放水果，相同的碰在一起就变大，一路合成到西瓜。',tags:['物理合成','可撤销']},
+    {name:'小恐龙快跑',path:'dino/',cat:'casual',icon:'🦖',tone:'green',desc:'谷歌浏览器断网时那只小恐龙。跳过仙人掌和翼龙，跑得越远越好。',tags:['跑酷','昼夜切换']},
+    {name:'今天吃什么',path:'../tools/food/',cat:'casual',icon:'🍜',tone:'amber',desc:'选择困难症专用。滚轮一转，把决定交给命运，还能自己加候选。',tags:['决策骰子','可自定义']}
+  ];
+  const LABEL={text:'文字类',number:'数字类',puzzle:'益智类',casual:'休闲类'};
+  const grid=$('grid'), tabs=$('tabs'), search=$('search'), count=$('count');
+  let active='all';
+  function render(){
+    const kw=search.value.trim().toLowerCase();
+    const list=GAMES.filter(g=>(active==='all'||g.cat===active)&&(!kw||g.name.toLowerCase().includes(kw)||g.desc.toLowerCase().includes(kw)||g.tags.some(t=>t.toLowerCase().includes(kw))));
+    count.textContent='显示 '+list.length+' / '+GAMES.length+' 款';
+    grid.innerHTML=list.map(g=>
+      '<a class="card'+(g.feature?' feature':'')+'" href="'+g.path+'" style="--tone:var(--'+g.tone+')">'+
+        '<div class="top"><div class="icon">'+g.icon+'</div><div class="kind">'+LABEL[g.cat]+'</div></div>'+
+        '<div class="path">'+g.path.replace(/^\.\.\//,'').replace(/\/$/,'')+'</div>'+
+        '<h2>'+g.name+'</h2><p>'+g.desc+'</p>'+
+        '<div class="meta">'+g.tags.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div>'+
+      '</a>').join('')||'<div class="empty">没有匹配的游戏</div>';
+  }
+  tabs.addEventListener('click',e=>{
+    const b=e.target.closest('.tab');if(!b)return;
+    active=b.dataset.cat;
+    tabs.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
+    render();
+  });
+  search.addEventListener('input',render);
+  render();
+})();
+</script>
+</body>
+</html>

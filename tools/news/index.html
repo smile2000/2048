@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>头条 · 新闻速览</title>
+<style>
+  :root{
+    --bg:#080b12;--panel:#121826;--line:#242e42;
+    --text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;
+    --accent:#e5484d;--cyan:#5cc8e8;--amber:#e8b45c;--green:#6ec9a4;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{background:radial-gradient(ellipse 70% 42% at 50% -10%,rgba(229,72,77,.09),transparent 70%),var(--bg);
+    min-height:100vh;min-height:100dvh;padding:0 18px calc(50px + env(safe-area-inset-bottom))}
+  .wrap{max-width:680px;margin:0 auto}
+  a.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;
+    font-size:12px;padding:18px 0 0;font-family:ui-monospace,monospace}
+  a.back:hover{color:var(--accent)}
+
+  header{padding:22px 0 18px}
+  h1{font-family:Georgia,"Songti SC",serif;font-size:27px;letter-spacing:.08em;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:12.5px;margin:0;line-height:1.8}
+  .bar{display:flex;align-items:center;gap:10px;margin-top:16px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+  .tab{background:none;border:1px solid var(--line);color:var(--muted);font-size:12px;
+    padding:7px 13px;border-radius:8px;cursor:pointer;font-family:inherit;transition:.16s}
+  .tab:hover{border-color:#3a465e;color:var(--text)}
+  .tab.on{background:rgba(229,72,77,.12);border-color:var(--accent);color:#f39b9e}
+  .refresh{background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;flex:0 0 auto}
+  .refresh:hover{color:var(--accent);border-color:var(--accent)}
+  .refresh.spin{animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .stamp{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--dim);margin:14px 0 6px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .stamp .live{width:6px;height:6px;border-radius:50%;background:var(--green)}
+  .stamp .warn{color:var(--amber)}
+
+  .list{display:flex;flex-direction:column}
+  .item{display:flex;gap:14px;padding:17px 4px;border-bottom:1px solid var(--line);
+    text-decoration:none;color:inherit;transition:.16s}
+  .item:hover{background:rgba(255,255,255,.02)}
+  .item .idx{font-family:ui-monospace,monospace;font-size:11px;color:var(--dim);padding-top:3px;flex:0 0 24px}
+  .item .body{flex:1;min-width:0}
+  .item .title{font-size:14.5px;line-height:1.6;margin-bottom:8px}
+  .item:hover .title{color:var(--cyan)}
+  .item .meta{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--dim);
+    font-family:ui-monospace,monospace;flex-wrap:wrap}
+  .item .src{color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:2px 6px}
+  .item .go{color:var(--dim);align-self:center;flex:0 0 auto}
+
+  .loading{text-align:center;color:var(--muted);padding:70px 0;font-size:13px;font-family:ui-monospace,monospace}
+  .error{text-align:center;color:var(--amber);padding:50px 0;font-size:13px;line-height:2}
+  .empty{text-align:center;color:var(--dim);padding:50px 0;font-size:13px}
+  .btn{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:8px;
+    padding:9px 16px;font-size:12px;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  footer{text-align:center;color:var(--dim);font-size:10.5px;font-family:ui-monospace,monospace;
+    margin-top:32px;line-height:2}
+  @media(max-width:520px){.item .title{font-size:13.5px}.tab{padding:6px 10px;font-size:11.5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← 返回工具箱</a>
+  <header>
+    <h1>头条速览</h1>
+    <p class="sub">知乎日报 + 国内科技媒体。聚合最新文章，点标题直达原文。</p>
+    <div class="bar">
+      <div class="tabs" id="tabs"></div>
+      <button class="refresh" id="refreshBtn" title="刷新">↻</button>
+    </div>
+  </header>
+  <div class="stamp" id="stamp"></div>
+  <div class="list" id="list"><div class="loading">正在获取新闻…</div></div>
+  <footer>公开 RSS 源 · 多接口回退 · 结果缓存于本机 10 分钟</footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+const KEY='news_cache_v2';
+const SOURCES=[
+  {id:'zhihu',name:'知乎日报',cat:'知乎',url:'https://rsshub.rssforever.com/zhihu/daily'},
+  {id:'36kr',name:'36氪',cat:'科技',url:'https://36kr.com/feed'},
+  {id:'geekpark',name:'极客公园',cat:'科技',url:'https://www.geekpark.net/rss'},
+  {id:'ithome',name:'IT之家',cat:'科技',url:'https://www.ithome.com/rss/'},
+  {id:'infoq',name:'InfoQ',cat:'科技',url:'https://www.infoq.cn/feed'},
+  {id:'oschina',name:'开源中国',cat:'科技',url:'https://www.oschina.net/news/rss'},
+  {id:'solidot',name:'Solidot',cat:'科技',url:'https://www.solidot.org/index.rss'},
+  {id:'ruanyifeng',name:'阮一峰',cat:'科技',url:'https://www.ruanyifeng.com/blog/atom.xml'},
+  {id:'sspai',name:'少数派',cat:'精选',url:'https://sspai.com/feed'},
+  {id:'ifanr',name:'爱范儿',cat:'精选',url:'https://www.ifanr.com/feed'}
+];
+const TABS=[{id:'all',name:'全部'},{id:'知乎',name:'知乎'},{id:'科技',name:'科技'},{id:'精选',name:'精选'}];
+const $=id=>document.getElementById(id);
+let current='all',cache=null,failed=[];
+
+function decode(s){
+  const d=document.createElement('textarea');d.innerHTML=s||'';return d.value.trim();
+}
+function clean(s){return decode((s||'').replace(/<[^>]+>/g,' '));}
+function timeAgo(dateStr){
+  const d=new Date(String(dateStr||'').replace(' ','T'));
+  if(isNaN(d))return '';
+  const diff=(Date.now()-d.getTime())/1000;
+  if(diff<0&&diff>-86400)return '刚刚';
+  if(diff<60)return '刚刚';
+  if(diff<3600)return Math.floor(diff/60)+' 分钟前';
+  if(diff<86400)return Math.floor(diff/3600)+' 小时前';
+  if(diff<2592000)return Math.floor(diff/86400)+' 天前';
+  return d.toLocaleDateString('zh-CN');
+}
+function parseRss2Json(d,src){
+  if(d.status!=='ok')throw new Error(d.message||'源不可用');
+  return (d.items||[]).slice(0,12).map(it=>({
+    title:clean(it.title),link:it.link,date:it.pubDate,src:src.name
+  })).filter(x=>x.title&&x.link);
+}
+function parseXML(text,src){
+  const doc=new DOMParser().parseFromString(text,'application/xml');
+  if(doc.querySelector('parsererror'))throw new Error('XML 解析失败');
+  const nodes=Array.from(doc.querySelectorAll('item, entry')).slice(0,12);
+  return nodes.map(n=>{
+    const g=tag=>{const e=n.getElementsByTagName(tag)[0];return e?e.textContent:'';};
+    let link=g('link');
+    if(!link){const a=Array.from(n.getElementsByTagName('link')).find(x=>x.getAttribute('href'));link=a?a.getAttribute('href'):'';}
+    return {title:clean(g('title')),link:link,date:g('pubDate')||g('updated')||g('published'),src:src.name};
+  }).filter(x=>x.title&&x.link);
+}
+async function tryJson(url){
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.json();
+}
+async function tryText(url){
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.text();
+}
+async function fetchSource(src){
+  const enc=encodeURIComponent(src.url);
+  // 1) rss2json：对多数源可用，浏览器跨域友好
+  try{
+    const d=await tryJson('https://api.rss2json.com/v1/api.json?rss_url='+enc+'&count=12');
+    const items=parseRss2Json(d,src);
+    if(items.length)return items;
+  }catch(e){}
+  // 2) allorigins 代理 + 浏览器直接解析 RSS
+  try{
+    const text=await tryText('https://api.allorigins.win/raw?url='+enc);
+    const items=parseXML(text,src);
+    if(items.length)return items;
+  }catch(e){}
+  // 3) feed2json 备用
+  try{
+    const d=await tryJson('https://feed2json.org/convert?url='+enc);
+    const items=(d.items||[]).slice(0,12).map(it=>({title:clean(it.title),link:it.url,date:it.date_published,src:src.name}))
+      .filter(x=>x.title&&x.link);
+    if(items.length)return items;
+  }catch(e){}
+  throw new Error('暂时无法获取');
+}
+async function load(force){
+  const btn=$('refreshBtn');btn.classList.add('spin');
+  $('list').innerHTML='<div class="loading">正在获取新闻…</div>';
+  try{
+    const now=Date.now();
+    if(!force&&cache&&now-cache.ts<10*60*1000){render();btn.classList.remove('spin');return;}
+    const results=await Promise.all(SOURCES.map(s=>fetchSource(s).catch(()=>[])));
+    failed=SOURCES.filter((s,i)=>!results[i].length).map(s=>s.name);
+    let items=results.flat();
+    items.sort((a,b)=>new Date(String(b.date).replace(' ','T'))-new Date(String(a.date).replace(' ','T')));
+    cache={ts:now,items:items};
+    try{localStorage.setItem(KEY,JSON.stringify(cache));}catch(e){}
+    render();
+  }catch(e){
+    $('list').innerHTML='<div class="error">获取失败：'+e.message+'<br><button class="btn" id="retryBtn">重试</button></div>';
+    $('retryBtn').onclick=()=>load(true);
+  }finally{btn.classList.remove('spin');}
+}
+function render(){
+  const items=(cache&&cache.items||[]).filter(x=>current==='all'||SOURCES.find(s=>s.name===x.src&&s.cat===current));
+  const stamp=$('stamp');
+  stamp.innerHTML='<span class="live"></span>'+new Date(cache.ts).toLocaleString('zh-CN')+' 更新 · 共 '+items.length+' 条'+
+    (failed.length?'<span class="warn">· 暂不可用：'+failed.join('、')+'</span>':'');
+  const box=$('list');
+  if(!items.length){box.innerHTML='<div class="empty">暂时没有内容，换个分类或点刷新</div>';return;}
+  box.innerHTML=items.slice(0,50).map((it,i)=>
+    '<a class="item" href="'+it.link+'" target="_blank" rel="noopener noreferrer">'+
+      '<span class="idx">'+String(i+1).padStart(2,'0')+'</span>'+
+      '<span class="body"><span class="title">'+it.title+'</span>'+
+      '<span class="meta"><span class="src">'+it.src+'</span><span>'+timeAgo(it.date)+'</span></span></span>'+
+      '<span class="go">↗</span></a>').join('');
+}
+function renderTabs(){
+  const box=$('tabs');box.innerHTML='';
+  TABS.forEach(t=>{
+    const b=document.createElement('button');b.className='tab'+(current===t.id?' on':'');b.textContent=t.name;
+    b.onclick=()=>{current=t.id;renderTabs();render();};box.appendChild(b);
+  });
+}
+$('refreshBtn').onclick=()=>load(true);
+try{
+  const c=JSON.parse(localStorage.getItem(KEY)||'null');
+  if(c&&c.items){cache=c;render();}
+}catch(e){}
+renderTabs();load(false);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>最后一班地铁 · 文字冒险</title>
+<style>
+  :root {
+    --bg: #080b12;
+    --bg-soft: #0e121c;
+    --panel: #121826;
+    --panel-2: #171e2e;
+    --line: #242e42;
+    --text: #e5eaf3;
+    --muted: #8a96ac;
+    --dim: #5d687d;
+    --accent: #e5484d;
+    --accent-soft: rgba(229, 72, 77, .14);
+    --cyan: #5cc8e8;
+    --gold: #e8b45c;
+    --green: #6ec9a4;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(92, 200, 232, .07), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 90% 110%, rgba(229, 72, 77, .06), transparent 70%),
+      var(--bg);
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* 细微扫描线氛围 */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 100;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px);
+    opacity: .5;
+  }
+
+  .wrap {
+    max-width: 760px; margin: 0 auto;
+    padding: 0 20px calc(40px + env(safe-area-inset-bottom));
+  }
+
+  /* ---------- 顶栏 ---------- */
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 22px 0 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 11px; margin-right: auto; min-width: 0; }
+  .brand-mark {
+    width: 34px; height: 34px; flex: 0 0 auto; border-radius: 9px;
+    background: var(--accent-soft); border: 1px solid rgba(229,72,77,.3);
+    display: grid; place-items: center; color: var(--accent);
+  }
+  .brand-mark svg { width: 18px; height: 18px; }
+  .brand h1 {
+    font-family: Georgia, "Songti SC", "SimSun", serif;
+    font-size: 17px; font-weight: 600; letter-spacing: .08em;
+    margin: 0; white-space: nowrap;
+  }
+  .brand small { display: block; font-size: 10px; color: var(--dim); letter-spacing: .18em; margin-top: 2px; font-family: ui-monospace, monospace; }
+
+  .icon-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    height: 34px; padding: 0 11px; flex: 0 0 auto;
+    background: var(--panel); color: var(--muted);
+    border: 1px solid var(--line); border-radius: 9px;
+    font-size: 12px; cursor: pointer; transition: .18s;
+  }
+  .icon-btn:hover { color: var(--text); border-color: #3a465e; background: var(--panel-2); }
+  .icon-btn .badge {
+    background: var(--accent); color: #fff; border-radius: 99px;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    font-size: 10px; line-height: 16px; text-align: center; font-weight: 700;
+  }
+  .icon-btn svg { width: 14px; height: 14px; }
+
+  /* ---------- 状态行 ---------- */
+  .statusline {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 2px 6px;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-size: 11px; letter-spacing: .06em; color: var(--dim);
+  }
+  .statusline .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: pulse 2.4s infinite; }
+  .statusline .sep { flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  /* ---------- 场景卡片 ---------- */
+  .scene {
+    position: relative; margin-top: 10px;
+    background: linear-gradient(160deg, var(--panel), var(--bg-soft));
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 30px 32px 32px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.35);
+  }
+  .scene::before {
+    content: ""; position: absolute; top: 0; left: 32px; right: 32px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(229,72,77,.5), transparent);
+  }
+  .scene.shake { animation: shake .5s cubic-bezier(.36,.07,.19,.97); }
+  @keyframes shake {
+    10%,90% { transform: translateX(-2px); }
+    20%,80% { transform: translateX(3px); }
+    30%,50%,70% { transform: translateX(-5px); }
+    40%,60% { transform: translateX(5px); }
+  }
+
+  .scene-text {
+    font-family: Georgia, "Songti SC", "SimSun", serif;
+    font-size: 16.5px; line-height: 2.15; letter-spacing: .02em;
+    min-height: 220px; white-space: pre-wrap; word-break: break-word;
+    cursor: pointer;
+  }
+  .scene-text strong { color: var(--accent); font-weight: 600; }
+  .cursor {
+    display: inline-block; width: 8px; height: 1.05em;
+    background: var(--accent); vertical-align: -2px; margin-left: 2px;
+    animation: blink .9s steps(1) infinite;
+  }
+  @keyframes blink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
+  .skip-hint {
+    margin-top: 8px; font-size: 11px; color: var(--dim);
+    font-family: ui-monospace, monospace; opacity: 0; transition: .3s;
+  }
+  .skip-hint.show { opacity: 1; }
+
+  /* ---------- 选项 ---------- */
+  .choices { display: flex; flex-direction: column; gap: 10px; margin-top: 26px; }
+  .choice {
+    display: flex; align-items: center; gap: 14px; width: 100%;
+    text-align: left; padding: 14px 18px;
+    background: rgba(255,255,255,.022); color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px;
+    font-size: 14px; font-family: inherit; cursor: pointer;
+    transition: .18s; position: relative;
+    opacity: 0; transform: translateY(8px);
+    animation: rise .35s forwards;
+  }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .choice:hover:not(:disabled) {
+    border-color: rgba(229,72,77,.5); background: var(--accent-soft);
+    transform: translateX(4px);
+  }
+  .choice:disabled { opacity: .4 !important; cursor: not-allowed; transform: none !important; }
+  .choice .num {
+    font-family: ui-monospace, monospace; font-size: 11px;
+    color: var(--accent); flex: 0 0 auto;
+    border: 1px solid rgba(229,72,77,.35); border-radius: 5px;
+    width: 22px; height: 22px; display: grid; place-items: center;
+  }
+  .choice .arrow { margin-left: auto; color: var(--dim); font-size: 15px; transition: .18s; }
+  .choice:hover:not(:disabled) .arrow { color: var(--accent); transform: translateX(3px); }
+  .choice.locked::after {
+    content: "线索不足"; margin-left: auto; font-size: 10px; color: var(--dim);
+    font-family: ui-monospace, monospace; border: 1px solid var(--line);
+    padding: 3px 7px; border-radius: 5px;
+  }
+  .choice.locked .arrow { display: none; }
+  .choice.special { border-color: rgba(232,180,92,.35); }
+  .choice.special .num { color: var(--gold); border-color: rgba(232,180,92,.4); }
+  .choice.special:hover:not(:disabled) { border-color: var(--gold); background: rgba(232,180,92,.08); }
+
+  /* ---------- 底部 ---------- */
+  footer {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 18px 2px 0; color: var(--dim); font-size: 11px;
+    font-family: ui-monospace, monospace; letter-spacing: .04em;
+  }
+  .text-btn {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 11px; font-family: inherit; padding: 4px 0; border-bottom: 1px dashed var(--line);
+  }
+  .text-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- 抽屉 ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(3,5,9,.72); backdrop-filter: blur(4px);
+    opacity: 0; visibility: hidden; transition: .25s;
+  }
+  .overlay.open { opacity: 1; visibility: visible; }
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 51;
+    width: min(420px, 92vw);
+    background: var(--bg-soft); border-left: 1px solid var(--line);
+    transform: translateX(100%); transition: .3s cubic-bezier(.2,.8,.2,1);
+    display: flex; flex-direction: column;
+    box-shadow: -20px 0 60px rgba(0,0,0,.5);
+  }
+  .drawer.open { transform: none; }
+  .drawer-head {
+    display: flex; align-items: center; padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .drawer-head h2 { margin: 0; font-size: 15px; letter-spacing: .06em; }
+  .drawer-head .sub { font-size: 11px; color: var(--dim); margin-left: auto; font-family: ui-monospace, monospace; }
+  .close-btn {
+    background: none; border: none; color: var(--muted); font-size: 22px;
+    cursor: pointer; line-height: 1; padding: 0 0 0 16px;
+  }
+  .close-btn:hover { color: var(--accent); }
+  .drawer-body { overflow-y: auto; padding: 18px 24px 40px; flex: 1; }
+  .clue {
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 10px; background: var(--panel);
+  }
+  .clue h3 { margin: 0 0 6px; font-size: 13px; color: var(--cyan); font-weight: 600; }
+  .clue p { margin: 0; font-size: 12.5px; line-height: 1.8; color: var(--muted); }
+  .clue.empty { opacity: .4; }
+  .clue.empty h3 { color: var(--dim); }
+
+  /* ---------- 模态 ---------- */
+  .modal {
+    position: fixed; inset: 0; z-index: 60; display: none;
+    align-items: center; justify-content: center; padding: 20px;
+    background: rgba(3,5,9,.82); backdrop-filter: blur(6px);
+  }
+  .modal.open { display: flex; }
+  .modal-card {
+    width: min(520px, 100%); max-height: 88vh; overflow-y: auto;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: 16px; padding: 32px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    animation: pop .3s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes pop { from { opacity: 0; transform: scale(.95) translateY(10px); } }
+  .modal-card h2 {
+    margin: 0 0 6px; font-family: Georgia, "Songti SC", serif;
+    font-size: 24px; letter-spacing: .05em;
+  }
+  .modal-tag {
+    display: inline-block; font-size: 10px; font-family: ui-monospace, monospace;
+    color: var(--gold); border: 1px solid rgba(232,180,92,.4);
+    padding: 3px 8px; border-radius: 5px; margin-bottom: 22px; letter-spacing: .1em;
+  }
+  .modal-text {
+    font-family: Georgia, "Songti SC", serif; font-size: 15px;
+    line-height: 2.1; white-space: pre-wrap; color: var(--text);
+  }
+  .modal-text strong { color: var(--accent); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 28px; flex-wrap: wrap; }
+  .btn {
+    padding: 11px 18px; border-radius: 9px; cursor: pointer;
+    font-size: 13px; font-family: inherit; transition: .18s;
+    border: 1px solid var(--line); background: var(--panel); color: var(--text);
+  }
+  .btn:hover { border-color: #3a465e; background: var(--panel-2); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #d63d42; }
+
+  .ending-grid { display: grid; gap: 10px; margin-top: 18px; }
+  .ending-item {
+    border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px; background: var(--panel);
+    cursor: pointer; transition: .18s;
+  }
+  .ending-item:hover { border-color: var(--accent); }
+  .ending-item .ico { color: var(--gold); font-size: 16px; }
+  .ending-item.locked { opacity: .45; cursor: default; }
+  .ending-item.locked:hover { border-color: var(--line); }
+  .ending-item b { font-size: 13px; display: block; }
+  .ending-item span { font-size: 11px; color: var(--dim); }
+
+  /* ---------- 开始界面 ---------- */
+  .splash { text-align: center; padding: 80px 20px 60px; }
+  .splash .time {
+    font-family: ui-monospace, monospace; font-size: 42px; letter-spacing: .12em;
+    color: var(--accent); text-shadow: 0 0 30px rgba(229,72,77,.35);
+  }
+  .splash h2 {
+    font-family: Georgia, "Songti SC", serif; font-size: 27px;
+    letter-spacing: .12em; margin: 18px 0 12px;
+  }
+  .splash p { color: var(--muted); font-size: 13px; line-height: 2; margin: 0 auto 34px; max-width: 380px; }
+  .splash .btn { min-width: 170px; margin: 5px; }
+  .splash .meta { margin-top: 34px; font-size: 11px; color: var(--dim); font-family: ui-monospace, monospace; }
+
+  /* 白光过场 */
+  .flash {
+    position: fixed; inset: 0; z-index: 90; background: #fff;
+    opacity: 0; pointer-events: none; transition: opacity .8s;
+  }
+  .flash.on { opacity: 1; }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 0 14px calc(30px + env(safe-area-inset-bottom)); }
+    header { padding: 16px 0 14px; gap: 7px; }
+    .brand h1 { font-size: 14px; }
+    .brand small { font-size: 9px; }
+    .brand-mark { width: 30px; height: 30px; }
+    .icon-btn { padding: 0 8px; font-size: 11px; height: 30px; }
+    .scene { padding: 24px 20px 26px; }
+    .scene-text { font-size: 15.5px; line-height: 2.05; min-height: 260px; }
+    .choice { padding: 13px 14px; font-size: 13.5px; }
+    .splash { padding: 60px 10px 40px; }
+    .splash .time { font-size: 34px; }
+    .modal-card { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21l2-3M16 21l-2-3"/><circle cx="8.5" cy="14.5" r=".8" fill="currentColor"/><circle cx="15.5" cy="14.5" r=".8" fill="currentColor"/>
+        </svg>
+      </div>
+      <div>
+        <h1>最后一班地铁</h1>
+        <small>THE LAST TRAIN · 01:47</small>
+      </div>
+    </div>
+    <button class="icon-btn" id="clueBtn" title="线索本">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V5H6.5A2.5 2.5 0 0 0 4 7.5z"/></svg>
+      线索<span class="badge" id="clueCount">0</span>
+    </button>
+    <button class="icon-btn" id="endBtn" title="结局收藏">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.8 5.7 21l2.3-7.2-6-4.4h7.6z"/></svg>
+      结局<span class="badge" id="endCount" style="background:#3a465e">0</span>
+    </button>
+  </header>
+
+  <div id="game" style="display:none">
+    <div class="statusline">
+      <span class="dot"></span><span id="statusText">车厢 · 运行中</span>
+      <span class="sep"></span><span id="stepText">第 001 段</span>
+    </div>
+
+    <div class="scene" id="scene">
+      <div class="scene-text" id="sceneText"></div>
+      <div class="skip-hint" id="skipHint">点击文字跳过动画 · 空格键继续</div>
+      <div class="choices" id="choices"></div>
+    </div>
+
+    <footer>
+      <span>进度自动保存在本机浏览器</span>
+      <button class="text-btn" id="restartBtn">重新开始</button>
+    </footer>
+  </div>
+
+  <div class="splash" id="splash">
+    <div class="time">01:47</div>
+    <h2>最后一班地铁</h2>
+    <p>凌晨一点四十七分，你踏上了末班地铁。<br>车厢里只有三个人。<br>而广播说，终点站是「归途」。</p>
+    <div id="splashBtns">
+      <button class="btn primary" id="startBtn">开始旅程</button>
+      <button class="btn" id="continueBtn" style="display:none">继续上次旅程</button>
+    </div>
+    <div class="meta">文字冒险 · 约 10 分钟 · 4 种结局</div>
+  </div>
+</div>
+
+<!-- 线索抽屉 -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h2>线索本</h2>
+    <span class="sub" id="drawerSub">0 / 7</span>
+    <button class="close-btn" data-close="drawer">×</button>
+  </div>
+  <div class="drawer-body" id="clueList"></div>
+</aside>
+
+<!-- 结局收藏 / 结局展示 -->
+<div class="modal" id="modal">
+  <div class="modal-card" id="modalCard"></div>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ==================== 剧情数据 ==================== */
+
+  const CLUES = {
+    girl:     { name: '红裙女孩', desc: '她叫林夏。三年前的地铁事故遇难者名单上，第三个名字就是她。' },
+    loop:     { name: '重复的旅程', desc: '每到「归途站」，列车就会重置。她在找一个坐在她旁边、却从不记得她的人。' },
+    mirror:   { name: '镜中的列车', desc: '窗外有另一列并行的火车，满车乘客都在看着这列车。一个孩子贴着玻璃举起手。' },
+    time:     { name: '停住的时间', desc: '站名是「遗忘」「回声」「归途」。报完站后一切重来，手机永远停在 1:47。' },
+    oldman:   { name: '老人的女儿', desc: '他额上有伤痕。三年前女儿在这趟车上，此后的每一天他都在找她。' },
+    list:     { name: '遇难者名单', desc: '三年前的报纸：23 人遇难。名单最下面，被水渍晕开的是你自己的名字。' },
+    identity: { name: '你是谁', desc: '三年前你在这节车厢里撞到头。身体躺在高架桥下，意识却一直留在这里，每次到站都重新上车。' }
+  };
+  const CLUE_ORDER = ['girl','loop','mirror','time','oldman','list','identity'];
+
+  const ENDINGS = {
+    awake: {
+      title: '醒来', tag: '真结局',
+      text: `你伸手拉下紧急制动。
+
+尖锐的刹车声撕开黑暗。白光从四面八方涌进来，吞没了车厢、红裙、老人、那一份报纸。
+
+……
+
+「病人意识恢复了！」
+
+你睁开眼。头顶是白色的天花板，鼻尖是消毒水的味道。窗外是清晨的阳光。
+
+床边，母亲握着你的手，肩膀在抖。
+
+「你昏睡了三年，」她说，「但医生说，你会好起来的。」
+
+你望向窗外。远处的高架上，一列地铁无声驶过。
+
+你活下来了。`
+    },
+    getoff: {
+      title: '轮回', tag: '循环结局',
+      text: `你走向车门。白光洒在脸上，温暖得像另一个世界。
+
+你回头看了一眼。
+
+红裙女孩还在低头看手机。老人还在望窗外。西装男人站在门边，对你微笑。
+
+「下一个，」他说，「该你了。」
+
+你跨出车门。车厢空了，列车重新启动，驶入隧道。
+
+下一站，一个穿蓝色外套的年轻人走上车，四处张望。车厢里多了一个戴鸭舌帽的老人，正望着窗外。
+
+广播响起：「本次列车终点站——归途。」`
+    },
+    loop: {
+      title: '困住', tag: '坏结局',
+      text: `你坐回座位，闭上眼。
+
+「下一站——归途。」
+
+车厢震动，灯光闪烁。
+
+你睁开眼。凌晨 1:47。车厢里只有三个人：一个穿红裙的女孩，低头盯着黑掉的手机；一个戴鸭舌帽的老人，望着窗外；一个西装男人，闭着眼。
+
+车门关上，列车启动。
+
+「欢迎乘坐末班地铁，」广播说，「你是今天第一位乘客。」
+
+你低头，发现自己穿着蓝色外套。`
+    },
+    takeover: {
+      title: '接班', tag: '隐藏结局',
+      text: `你留在了车厢里。
+
+广播照常响起：「本次列车终点站——归途。」
+
+门打开了。一个穿蓝色外套的年轻人走上来，四处张望。
+
+你低头看着手里的报纸，轻声说：
+
+「欢迎乘坐末班地铁。」
+
+他问：「你知道这班车几点结束吗？」
+
+你抬起头，看着他的眼睛。
+
+「每天都不一样，」你说，「但今天……已经第三遍了。」`
+    }
+  };
+
+  const S = {
+    start: {
+      status: '车厢 · 运行中', shake: true,
+      text: `凌晨 1:47。
+
+你踏上末班地铁。车厢里空得反常——除了你，只有三个人。
+
+一个穿红裙的女孩，低头盯着黑掉的手机屏幕。
+一个戴鸭舌帽的老人，直直地望着窗外。
+一个西装男人，闭着眼，手里握着一份皱巴巴的报纸。
+
+车门关上，列车启动。
+
+广播响起：「本次列车终点站——归途。」
+
+你摸出手机：1:47。没有信号。`,
+      choices: [
+        { label: '坐到红裙女孩旁边', to: 'girl_sit' },
+        { label: '走到窗边，看看外面', to: 'window' },
+        { label: '在戴帽老人对面坐下', to: 'oldman' },
+        { label: '打量那个西装男人', to: 'suit' }
+      ]
+    },
+    girl_sit: {
+      text: `你在她旁边坐下。她没有抬头。
+
+「你知道这班车几点结束吗？」你问。
+
+她慢慢抬起头。她的眼睛很红，像是哭过，又像是很久没眨过。
+
+「每天都不一样，」她说，「但今天……已经第三遍了。」
+
+「第三遍什么？」
+
+她没回答，只是把手机递给你。屏幕上是一条没发出去的短信：
+
+**「妈，我上车了。」**
+
+发送时间：三年前的今天。`,
+      choices: [
+        { label: '问她叫什么名字', to: 'girl_name' },
+        { label: '问「第三遍」是什么意思', to: 'girl_loop' },
+        { label: '起身回到过道', to: 'hub' }
+      ]
+    },
+    girl_name: {
+      clue: 'girl',
+      text: `「林夏，」她说。
+
+你愣住了。
+
+三年前那场地铁追尾事故，新闻里的遇难者名单——第三个名字，林夏，二十三岁，穿红色连衣裙。
+
+她看着你的表情，轻轻笑了。
+
+「你终于想起来了。」`,
+      choices: [ { label: '回到过道', to: 'hub' } ]
+    },
+    girl_loop: {
+      clue: 'loop', shake: true,
+      text: `「每到归途站，车就会重新开始，」她说，「我在找一个人，但每次都错过。」
+
+「找谁？」
+
+「找一个坐在我旁边，却从来不记得我的人。」
+
+她直视着你。车厢晃了一下，灯光闪烁。等灯光稳住，她的座位空了。
+
+刚才的一切像是从未发生。但你记住了那句话。`,
+      choices: [ { label: '回到过道', to: 'hub' } ]
+    },
+    window: {
+      text: `你走到窗边。隧道里一片漆黑，只有应急灯一盏盏向后掠过。
+
+玻璃上映出车厢：座椅、扶手、顶灯。
+
+可是倒影里，那三个人不见了。
+
+只有你一个人坐在空荡荡的车厢里。
+
+你回头。他们还在原来的位置。`,
+      choices: [
+        { label: '贴近玻璃，仔细看隧道', to: 'tunnel' },
+        { label: '数一数过了几站', to: 'stations' },
+        { label: '回到过道', to: 'hub' }
+      ]
+    },
+    tunnel: {
+      clue: 'mirror',
+      text: `你把脸贴近玻璃。
+
+黑暗深处，似乎有另一列车与你们并行。对面车厢灯火通明，坐满了人，全都面向窗外，表情麻木。
+
+然后你意识到——他们在看的是**这列车**。
+
+一个孩子举起手，贴在玻璃上。位置正好对着你。
+
+列车交汇的瞬间，你看清了那孩子胸前的校牌：**三年二班**。`,
+      choices: [ { label: '回到过道', to: 'hub' } ]
+    },
+    stations: {
+      clue: 'time',
+      text: `你开始数站。
+
+「下一站，遗忘。」
+「下一站，回声。」
+「下一站，归途。」
+
+这些站名你从没听过。
+
+更奇怪的是，每次报完「归途」，车厢就会轻微震动，然后广播重新开始：
+
+「本次列车终点站——归途。」
+
+你又看了眼手机。
+
+1:47。`,
+      choices: [ { label: '回到过道', to: 'hub' } ]
+    },
+    oldman: {
+      text: `你在老人对面坐下。鸭舌帽压得很低，你看不清他的脸。
+
+「小伙子，」他突然开口，声音沙哑，「你是不是觉得这里很冷？」
+
+确实是。车厢像冰窖一样，你的呼吸都带着白雾。
+
+「因为这里不是车厢，」他说，「是铁轨埋住的地方。」`,
+      choices: [
+        { label: '请他摘下帽子', to: 'hat' },
+        { label: '看一眼他腿上的报纸', to: 'newspaper' },
+        { label: '回到过道', to: 'hub' }
+      ]
+    },
+    hat: {
+      clue: 'oldman',
+      text: `老人沉默了几秒，伸手摘下帽子。
+
+他的额头有一道深深的伤痕，从左眉骨延伸到发际线。
+
+「三年前，」他说，「我女儿也在这趟车上。她坐在窗边，跟我讲她刚找到工作，说下个月请我吃饭。」
+
+「然后灯灭了。」
+
+「我醒来的时候，她在担架上。医生让我看最后一眼，我看了。」
+
+他把帽子重新扣回头上。
+
+「所以我每天上这班车。可每次灯亮起来，她就不见了。」`,
+      choices: [ { label: '回到过道', to: 'hub' } ]
+    },
+    newspaper: {
+      clue: 'list', shake: true,
+      text: `你伸手拿起他腿上的报纸。
+
+日期是三年前的今天。
+
+头条标题：**《地铁追尾事故：23 人遇难》**
+
+你的目光停在遇难者名单上——
+
+第三行：林夏，23 岁。
+第十七行：陈建国，61 岁。
+
+名单最下面，有一个被水渍晕开的名字。你用力辨认。
+
+那是**你的名字**。
+
+报纸从你手里滑落。老人什么也没说。`,
+      choices: [ { label: '回到过道', to: 'hub' } ]
+    },
+    suit: {
+      text: `你走到西装男人旁边。他闭着眼，手指夹着一份报纸——不是今天的报纸。
+
+你轻轻碰了碰他的肩膀。没有反应。
+
+不对——他没有影子。
+
+车厢灯光下，女孩和老人都在椅下投出淡淡的影子，只有他，椅子下面空空荡荡。
+
+一阵冷风从车门缝隙吹进来。他睁开了眼。
+
+「你终于看见了，」他的声音像从很远的地方传来，「我不是乘客。我是这班车本身。」`,
+      choices: [
+        { label: '问「这是什么意思」', to: 'suit_explain' },
+        { label: '退回过道', to: 'hub' }
+      ]
+    },
+    suit_explain: {
+      clue: 'identity',
+      text: `「你已经在归途站了，」他说，「只是你还不肯下车。」
+
+「三年前的今晚，你在这节车厢里。灯灭了，你撞到头。你的身体躺在高架桥下，可你的意识——」他指了指周围，「一直留在这里。」
+
+「每次到站，你都会重新上来。每次你都以为，自己是第一次坐这班车。」
+
+他站起身，走到车门前。门打开了，外面是一片刺眼的白光。
+
+「你可以下车了。但你要知道——下车之后，你再也见不到他们了。」`,
+      choices: [
+        { label: '走向车门，下车', to: 'e_getoff' },
+        { label: '问他：我能替你吗？', to: 'suit_takeover', special: true },
+        { label: '暂时坐回座位', to: 'hub' }
+      ]
+    },
+    suit_takeover: {
+      text: `「让我来吧，」你说。
+
+他愣了一下，随后笑了，笑意里有种说不出的疲惫。
+
+「你确定？一旦留下，就再也不能下车了。」
+
+你点头。
+
+他脱下西装，叠好，放在你膝上。「记住规则：不要告诉他们真相。等到下一个上车的人，就够了。」
+
+他跨出车门。白光吞没了他。
+
+你闭上眼，再睁开时，手里握着一份皱巴巴的报纸。
+
+广播响起：「本次列车终点站——归途。」
+
+门打开了。一个穿蓝色外套的年轻人走上来，四处张望。
+
+你低声说：「欢迎乘坐末班地铁。」`,
+      choices: [ { label: '……', to: 'e_takeover' } ]
+    },
+    hub: {
+      status: '车厢 · 循环重置', shake: true,
+      text: `广播再次响起：「下一站——归途。」
+
+你在车厢里来回走动。有些人、有些事，你还没来得及弄清楚。
+
+窗外的隧道永远没有尽头。手机上的时间仍然是 1:47。`,
+      choices: [
+        { label: '再去看看红裙女孩', to: 'girl_sit', hideIf: ['girl_name','girl_loop'] },
+        { label: '再去窗边看看', to: 'window', hideIf: ['tunnel','stations'] },
+        { label: '再和戴帽老人聊聊', to: 'oldman', hideIf: ['hat','newspaper'] },
+        { label: '再找西装男人说话', to: 'suit', hideIf: ['suit_explain'] },
+        { label: '拉下紧急制动', to: 'e_awake', need: ['list','identity'], special: true },
+        { label: '问西装男人：我能替你吗？', to: 'suit_takeover', need: ['identity'], special: true },
+        { label: '走向车门，下车', to: 'e_getoff', need: ['identity'] },
+        { label: '坐回座位，什么都不做', to: 'e_loop' }
+      ]
+    }
+  };
+
+  /* ==================== 状态与存档 ==================== */
+
+  const KEY = 'lasttrain_save_v1';
+  let state = { node: 'start', clues: [], visited: [], endings: [] };
+  let typing = false, typeTimer = null, fullText = '';
+  let step = 1;
+
+  const $ = id => document.getElementById(id);
+  const scene = $('scene'), sceneText = $('sceneText'), choicesBox = $('choices');
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d && S[d.node]) state = Object.assign(state, d);
+      }
+    } catch (e) {}
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  /* ==================== 渲染 ==================== */
+
+  function fmt(text) {
+    return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  function typeWriter(text, done) {
+    clearInterval(typeTimer);
+    fullText = text;
+    let i = 0;
+    sceneText.innerHTML = '';
+    typing = true;
+    $('skipHint').classList.add('show');
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    sceneText.appendChild(cursor);
+    const buffer = [];
+    let plain = '';
+
+    typeTimer = setInterval(() => {
+      if (i >= text.length) {
+        clearInterval(typeTimer);
+        sceneText.innerHTML = fmt(text);
+        typing = false;
+        $('skipHint').classList.remove('show');
+        done && done();
+        return;
+      }
+      const ch = text[i++];
+      plain += ch;
+      buffer.push(ch);
+      if (buffer.length >= 3 || i >= text.length) {
+        cursor.remove();
+        sceneText.innerHTML = fmt(plain) + '<span class="cursor"></span>';
+        sceneText.appendChild(cursor);
+        buffer.length = 0;
+      }
+      // 标点稍微停顿（只跳过紧随的空格，不吞掉换行）
+      if ('。！？；'.includes(ch) && text[i] === ' ') i++;
+      if ('，、：'.includes(ch) && text[i] === ' ') i++;
+    }, 22);
+  }
+
+  function skipTyping() {
+    if (!typing) return;
+    clearInterval(typeTimer);
+    sceneText.innerHTML = fmt(fullText);
+    typing = false;
+    $('skipHint').classList.remove('show');
+    const pending = sceneText.dataset.pending;
+    if (pending) renderChoices(JSON.parse(pending));
+  }
+
+  function hasAll(list) { return list.every(x => state.clues.includes(x)); }
+
+  function renderChoices(list) {
+    choicesBox.innerHTML = '';
+    list.forEach((c, idx) => {
+      if (c.hideIf && c.hideIf.every(n => state.visited.includes(n))) return;
+      const btn = document.createElement('button');
+      btn.className = 'choice' + (c.special ? ' special' : '');
+      const locked = c.need && !hasAll(c.need);
+      if (locked) btn.classList.add('locked');
+      btn.disabled = !!locked;
+      btn.style.animationDelay = (idx * 0.07) + 's';
+      const num = document.createElement('span');
+      num.className = 'num';
+      num.textContent = String(idx + 1).padStart(2, '0');
+      const label = document.createElement('span');
+      label.textContent = c.label;
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      arrow.textContent = '→';
+      btn.append(num, label, arrow);
+      btn.addEventListener('click', () => go(c.to));
+      choicesBox.appendChild(btn);
+    });
+  }
+
+  function go(id) {
+    if (id.startsWith('e_')) return showEnding(id.slice(2));
+    const node = S[id];
+    if (!node) return;
+    state.node = id;
+    if (!state.visited.includes(id)) state.visited.push(id);
+    if (node.clue && !state.clues.includes(node.clue)) state.clues.push(node.clue);
+    step++;
+    save();
+    updateHUD();
+    scene.classList.toggle('shake', !!node.shake);
+    if (node.shake) setTimeout(() => scene.classList.remove('shake'), 600);
+    $('statusText').textContent = node.status || '车厢 · 运行中';
+    $('stepText').textContent = '第 ' + String(step).padStart(3, '0') + ' 段';
+    choicesBox.innerHTML = '';
+    sceneText.dataset.pending = JSON.stringify(node.choices);
+    typeWriter(node.text, () => {
+      delete sceneText.dataset.pending;
+      renderChoices(node.choices);
+    });
+  }
+
+  function updateHUD() {
+    $('clueCount').textContent = state.clues.length;
+    $('endCount').textContent = state.endings.length;
+    $('drawerSub').textContent = state.clues.length + ' / ' + CLUE_ORDER.length;
+    renderClues();
+  }
+
+  function renderClues() {
+    const box = $('clueList');
+    box.innerHTML = '';
+    CLUE_ORDER.forEach((id, i) => {
+      const c = CLUES[id], found = state.clues.includes(id);
+      const d = document.createElement('div');
+      d.className = 'clue' + (found ? '' : ' empty');
+      d.innerHTML = '<h3>' + (found ? String(i+1).padStart(2,'0') + ' · ' + c.name : '?? · 未发现') + '</h3><p>' + (found ? c.desc : '继续探索车厢，也许还能找到些什么。') + '</p>';
+      box.appendChild(d);
+    });
+  }
+
+  /* ==================== 结局 ==================== */
+
+  function showEnding(id) {
+    const e = ENDINGS[id];
+    if (!e) return;
+    if (!state.endings.includes(id)) state.endings.push(id);
+    save();
+    updateHUD();
+    const modal = $('modal'), card = $('modalCard');
+    card.innerHTML =
+      '<h2>' + e.title + '</h2>' +
+      '<span class="modal-tag">' + e.tag + ' · 已解锁 ' + state.endings.length + '/' + Object.keys(ENDINGS).length + '</span>' +
+      '<div class="modal-text">' + fmt(e.text) + '</div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn primary" id="againBtn">再坐一次</button>' +
+        '<button class="btn" id="viewEndBtn">结局收藏</button>' +
+        '<button class="btn" id="closeEndBtn">留在这里</button>' +
+      '</div>';
+    modal.classList.add('open');
+    // 白光过场
+    if (id === 'awake' || id === 'takeover' || id === 'getoff') {
+      const flash = $('flash');
+      flash.classList.add('on');
+      setTimeout(() => flash.classList.remove('on'), 900);
+    }
+    $('againBtn').onclick = () => { modal.classList.remove('open'); reset(); };
+    $('viewEndBtn').onclick = showEndings;
+    $('closeEndBtn').onclick = () => modal.classList.remove('open');
+  }
+
+  function showEndings() {
+    const modal = $('modal'), card = $('modalCard');
+    let html = '<h2>结局收藏</h2><span class="modal-tag">已解锁 ' + state.endings.length + ' / ' + Object.keys(ENDINGS).length + '</span><div class="ending-grid">';
+    Object.keys(ENDINGS).forEach(id => {
+      const e = ENDINGS[id], got = state.endings.includes(id);
+      html += '<div class="ending-item' + (got ? '' : ' locked') + '" data-end="' + id + '">' +
+        '<span class="ico">' + (got ? '◆' : '◇') + '</span><div><b>' + (got ? e.title : '未解锁') + '</b><span>' + (got ? e.tag : '???') + '</span></div></div>';
+    });
+    html += '</div><div class="modal-actions"><button class="btn" id="closeColBtn">关闭</button></div>';
+    card.innerHTML = html;
+    modal.classList.add('open');
+    card.querySelectorAll('.ending-item:not(.locked)').forEach(el => {
+      el.onclick = () => showEnding(el.dataset.end);
+    });
+    $('closeColBtn').onclick = () => modal.classList.remove('open');
+  }
+
+  /* ==================== 流程控制 ==================== */
+
+  function reset() {
+    state = { node: 'start', clues: [], visited: [], endings: state.endings.slice() };
+    step = 1;
+    save();
+    $('splash').style.display = 'none';
+    $('game').style.display = 'block';
+    go('start');
+  }
+
+  function startGame(resume) {
+    $('splash').style.display = 'none';
+    $('game').style.display = 'block';
+    if (resume && state.visited.length) {
+      step = Math.max(1, state.visited.length);
+      updateHUD();
+      $('statusText').textContent = S[state.node].status || '车厢 · 运行中';
+      $('stepText').textContent = '第 ' + String(step).padStart(3, '0') + ' 段';
+      const node = S[state.node];
+      sceneText.dataset.pending = JSON.stringify(node.choices);
+      typeWriter(node.text, () => { delete sceneText.dataset.pending; renderChoices(node.choices); });
+    } else {
+      reset();
+    }
+  }
+
+  /* ==================== 事件绑定 ==================== */
+
+  load();
+  if (state.visited.length) $('continueBtn').style.display = 'inline-block';
+  updateHUD();
+
+  $('startBtn').onclick = () => { try { localStorage.removeItem(KEY); } catch(e){} state = { node:'start', clues:[], visited:[], endings: state.endings.slice() }; save(); startGame(false); };
+  $('continueBtn').onclick = () => startGame(true);
+  $('restartBtn').onclick = () => { if (confirm('确定要重新开始吗？已收集的线索会清空，结局收藏会保留。')) reset(); };
+
+  sceneText.addEventListener('click', skipTyping);
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' && typing) { e.preventDefault(); skipTyping(); }
+    if (e.key === 'Escape') { closeAll(); }
+    if (/^[1-9]$/.test(e.key) && !typing && choicesBox.children.length) {
+      const btn = choicesBox.children[parseInt(e.key, 10) - 1];
+      if (btn && !btn.disabled) btn.click();
+    }
+  });
+
+  function closeAll() {
+    $('overlay').classList.remove('open');
+    $('drawer').classList.remove('open');
+    $('modal').classList.remove('open');
+  }
+  $('clueBtn').onclick = () => { $('overlay').classList.add('open'); $('drawer').classList.add('open'); };
+  $('endBtn').onclick = showEndings;
+  $('overlay').onclick = closeAll;
+  document.querySelectorAll('[data-close]').forEach(b => b.onclick = closeAll);
+})();
+</script>
+</body>
+</html>

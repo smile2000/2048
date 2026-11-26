@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>工具箱 · 大黄鱼游乐场</title>
+<style>
+  :root{--bg:#080b12;--panel:#121826;--line:#242e42;--text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;
+    --accent:#e5484d;--cyan:#5cc8e8;--gold:#e8b45c;--amber:#e8b45c;--green:#6ec9a4;--violet:#a98be8;--pink:#e890a8}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  body{background:radial-gradient(ellipse 70% 45% at 15% -5%,rgba(92,200,232,.08),transparent 70%),
+      radial-gradient(ellipse 60% 40% at 90% 105%,rgba(229,72,77,.07),transparent 70%),var(--bg);
+    min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:0 20px calc(40px + env(safe-area-inset-bottom))}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:10;background:repeating-linear-gradient(0deg,rgba(255,255,255,.015) 0 1px,transparent 1px 3px);opacity:.5}
+  .wrap{width:100%;max-width:920px}
+  header{padding:56px 0 24px;text-align:center}
+  .time{font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;font-size:12px;letter-spacing:.3em;color:var(--accent);margin-bottom:18px;
+    display:flex;align-items:center;justify-content:center;gap:10px}
+  .time::before,.time::after{content:"";width:34px;height:1px;background:linear-gradient(90deg,transparent,var(--accent))}
+  .time::after{background:linear-gradient(90deg,var(--accent),transparent)}
+  h1{font-family:Georgia,"Songti SC","SimSun",serif;font-size:34px;letter-spacing:.14em;margin:0 0 12px;font-weight:600}
+  .sub{color:var(--muted);font-size:13px;line-height:1.9;margin:0 auto;max-width:460px}
+  .back{display:inline-block;margin-top:18px;font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:6px 12px}
+  .back:hover{color:var(--cyan);border-color:var(--cyan)}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .card{position:relative;display:block;text-decoration:none;color:inherit;background:linear-gradient(155deg,var(--panel),#0c1019);
+    border:1px solid var(--line);border-radius:14px;padding:24px 22px 22px;transition:.2s;overflow:hidden}
+  .card::before{content:"";position:absolute;top:0;left:22px;right:22px;height:1px;background:linear-gradient(90deg,transparent,var(--tone),transparent);opacity:.7}
+  .card:hover{border-color:var(--tone);transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,.35)}
+  .card .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .card .icon{width:44px;height:44px;border-radius:11px;display:grid;place-items:center;font-size:21px;
+    background:color-mix(in srgb,var(--tone) 14%,transparent);border:1px solid color-mix(in srgb,var(--tone) 32%,transparent);color:var(--tone)}
+  .card .kind{font-family:ui-monospace,monospace;font-size:10px;color:var(--dim);letter-spacing:.1em}
+  .card .path{font-family:ui-monospace,monospace;font-size:10px;color:var(--tone);letter-spacing:.06em;margin-bottom:8px}
+  .card h2{font-family:Georgia,"Songti SC",serif;font-size:19px;letter-spacing:.04em;margin:0 0 8px;font-weight:600}
+  .card p{margin:0;color:var(--muted);font-size:12px;line-height:1.75;min-height:42px}
+  .card .meta{display:flex;gap:6px;margin-top:16px;flex-wrap:wrap}
+  .card .tag{font-family:ui-monospace,monospace;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:5px;padding:3px 7px}
+  footer{margin-top:44px;text-align:center;color:var(--dim);font-size:11px;font-family:ui-monospace,monospace;line-height:2}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}header{padding:40px 0 20px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="time">PLATFORM 01 · 大黄鱼游乐场</div>
+    <h1>工具箱</h1>
+    <p class="sub">四个日常小工具。<br>看看时间、查查天气、翻翻头条，或者直接把选择交给命运。</p>
+    <a class="back" href="../">← 返回首页</a>
+  </header>
+  <div class="grid" id="grid"></div>
+  <footer>
+    <div>GITHUB PAGES · 纯前端 · 无需登录</div>
+    <div>设置保存在各自浏览器本地</div>
+  </footer>
+</div>
+<script>
+(function(){
+  const TOOLS=[
+    {name:'距离',path:'countdown/',cat:'TIME',icon:'⏳',tone:'gold',desc:'下一个节日还有多少天？法定假期、传统节日、西洋节日，还能添加自己的纪念日。',tags:['实时倒计时','可自定义']},
+    {name:'天气查询',path:'weather/',cat:'WEATHER',icon:'☀️',tone:'green',desc:'搜城市或一键定位，看当前天气、未来五天预报和穿衣建议。无需注册。',tags:['实用工具','实时数据']},
+    {name:'头条速览',path:'news/',cat:'NEWS',icon:'📰',tone:'accent',desc:'知乎日报，加上 36氪、极客公园、IT之家等国内科技媒体，一点直达原文。',tags:['新闻聚合','10 个信源']},
+    {name:'今天吃什么',path:'food/',cat:'DECISION',icon:'🍜',tone:'amber',desc:'选择困难症专用。滚轮一转，把决定交给命运，还能自己加候选清单。',tags:['决策骰子','可自定义']}
+  ];
+  document.getElementById('grid').innerHTML=TOOLS.map(t=>
+    '<a class="card" href="'+t.path+'" style="--tone:var(--'+t.tone+')">'+
+      '<div class="top"><div class="icon">'+t.icon+'</div><div class="kind">'+t.cat+'</div></div>'+
+      '<div class="path">/tools/'+t.path.replace(/\/$/,'')+'</div>'+
+      '<h2>'+t.name+'</h2><p>'+t.desc+'</p>'+
+      '<div class="meta">'+t.tags.map(x=>'<span class="tag">'+x+'</span>').join('')+'</div>'+
+    '</a>').join('');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+:root {
+  color-scheme: dark;
+  --bg: #0f1115;
+  --surface: #171a21;
+  --surface-2: #20242d;
+  --text: #e8eaed;
+  --muted: #9aa0aa;
+  --border: rgba(255,255,255,.12);
+  --accent: #7F77DD;
+  --accent-text: #ffffff;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-2: #ecece7;
+  --text: #1f2023;
+  --muted: #6b6f76;
+  --border: rgba(0,0,0,.12);
+  --accent: #534AB7;
+  --accent-text: #ffffff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px 48px;
+  transition: background .2s ease, color .2s ease;
+}
+.app { width: 100%; max-width: 460px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: var(--accent-text);
+  font-size: 20px; font-weight: 500;
+}
+h1 { font-size: 22px; font-weight: 500; margin: 0; line-height: 1.2; }
+.brand p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.icon-btn { width: 38px; height: 38px; padding: 0; border-radius: 10px; }
+.scores { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.score-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; }
+.score-box .label { display: block; font-size: 12px; color: var(--muted); }
+.score-box strong { font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.btn {
+  appearance: none; font-family: inherit;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 10px; padding: 10px 8px; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: border-color .15s ease, opacity .15s ease;
+}
+.btn:hover:not(:disabled) { border-color: var(--muted); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+.btn-quiet { background: transparent; border-color: transparent; color: var(--muted); font-size: 12px; padding: 6px 10px; margin-top: 8px; }
+.btn-quiet:hover:not(:disabled) { color: var(--text); border-color: var(--border); }
+.board-wrap { position: relative; }
+.board {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  padding: 10px; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 16px;
+  touch-action: none;
+}
+.cell {
+  aspect-ratio: 1 / 1; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(20px, 6vw, 30px); font-weight: 500;
+  font-variant-numeric: tabular-nums; color: var(--text);
+}
+.cell.filled { background: var(--tile-bg); color: var(--tile-fg); border-color: var(--tile-border); }
+.cell.new { animation: pop .18s ease-out; }
+@keyframes pop { from { transform: scale(.82); opacity: .35; } to { transform: scale(1); opacity: 1; } }
+.overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.62); border-radius: 16px;
+}
+.overlay[hidden] { display: none; }
+.overlay-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 24px; text-align: center; width: 80%;
+}
+.overlay-card p:first-child { margin: 0 0 8px; font-size: 18px; font-weight: 500; }
+.overlay-card p:nth-child(2) { margin: 0 0 18px; font-size: 13px; color: var(--muted); }
+.tips { margin-top: 18px; text-align: center; font-size: 12px; color: var(--muted); line-height: 1.7; }
+.tips p { margin: 2px 0; }
+@media (max-width: 360px) { .actions { grid-template-columns: 1fr 1fr; } }

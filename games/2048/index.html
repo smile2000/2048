@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="一个可以直接在浏览器玩的 2048 小游戏，部署在 GitHub Pages。">
+  <meta name="theme-color" content="#0f1115">
+  <title>2048 · 我的小游戏</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">2</span>
+        <div>
+          <h1>2048</h1>
+          <p>合并数字，冲到 2048</p>
+        </div>
+      </div>
+      <button id="themeBtn" class="btn icon-btn" aria-label="切换主题" title="切换主题">◐</button>
+    </header>
+
+    <section class="scores" aria-label="得分">
+      <div class="score-box">
+        <span class="label">分数</span>
+        <strong id="score">0</strong>
+      </div>
+      <div class="score-box">
+        <span class="label">最高</span>
+        <strong id="best">0</strong>
+      </div>
+    </section>
+
+    <section class="actions" aria-label="游戏操作">
+      <button id="undoBtn" class="btn" disabled>撤销</button>
+      <button id="newBtn" class="btn btn-primary">新游戏</button>
+      <button id="shareBtn" class="btn">分享</button>
+    </section>
+
+    <div class="board-wrap">
+      <div id="board" class="board" role="grid" aria-label="2048 棋盘"></div>
+      <div id="overlay" class="overlay" hidden>
+        <div class="overlay-card">
+          <p id="overlayTitle">游戏结束</p>
+          <p id="overlayDesc">本局得分 0</p>
+          <button id="overlayBtn" class="btn btn-primary">再来一局</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="tips">
+      <p>方向键 / WASD 移动 · 手机可滑动 · 相同数字合并</p>
+      <p>按 R 新游戏 · 按 U 撤销</p>
+      <button id="clearBtn" class="btn btn-quiet">清除记录</button>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
