@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080b12">
+<title>SBTI 人格测试 · 鱼塘</title>
+<style>
+  :root{--bg:#080b12;--panel:#121826;--line:#242e42;--text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;
+    --gold:#e8b45c;--cyan:#5cc8e8;--violet:#a98be8;--pink:#e890a8;--green:#6ec9a4;--accent:#e5484d}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  body{background:radial-gradient(ellipse 70% 45% at 15% -5%,rgba(92,200,232,.09),transparent 70%),
+      radial-gradient(ellipse 60% 40% at 90% 105%,rgba(232,180,92,.07),transparent 70%),var(--bg);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 20px calc(40px + env(safe-area-inset-bottom))}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:10;background:repeating-linear-gradient(0deg,rgba(255,255,255,.015) 0 1px,transparent 1px 3px);opacity:.5}
+  .wrap{width:100%;max-width:680px}
+  header{padding:44px 0 18px;text-align:center}
+  .kicker{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.3em;color:var(--gold);margin-bottom:14px}
+  h1{font-size:30px;font-weight:650;letter-spacing:.04em;margin:0 0 12px}
+  h1 em{font-style:normal;color:var(--gold)}
+  .sub{color:var(--muted);font-size:13px;line-height:1.85;margin:0}
+  .warn{margin:14px auto 0;max-width:440px;font-size:12px;line-height:1.7;color:var(--dim);
+    border:1px dashed var(--line);border-radius:10px;padding:10px 14px;text-align:left}
+  .back{display:inline-block;margin-top:16px;color:var(--muted);text-decoration:none;font-size:12px;border:1px solid var(--line);
+    padding:7px 14px;border-radius:20px;transition:.2s}
+  .back:hover{color:var(--text);border-color:var(--cyan)}
+
+  .card{background:linear-gradient(160deg,rgba(30,39,58,.9),rgba(18,24,38,.9));border:1px solid var(--line);
+    border-radius:18px;padding:28px;margin-top:18px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+  .progress{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+  .bar{flex:1;height:5px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--gold));border-radius:4px;transition:width .35s ease}
+  .step{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted);white-space:nowrap}
+  .qnum{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.2em;color:var(--cyan);margin-bottom:12px}
+  .qtext{font-size:19px;line-height:1.65;font-weight:600;margin:0 0 24px}
+  .opts{display:flex;flex-direction:column;gap:11px}
+  .opt{display:flex;align-items:center;gap:13px;width:100%;text-align:left;cursor:pointer;
+    background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:15px 17px;
+    color:var(--text);font:inherit;font-size:14px;line-height:1.5;transition:.18s}
+  .opt:hover{border-color:var(--cyan);background:rgba(92,200,232,.07);transform:translateX(3px)}
+  .opt.on{border-color:var(--gold);background:rgba(232,180,92,.12)}
+  .opt .key{width:24px;height:24px;flex:none;border-radius:50%;border:1px solid var(--line);
+    display:grid;place-items:center;font-size:11px;color:var(--muted);transition:.18s}
+  .opt:hover .key,.opt.on .key{border-color:currentColor}
+  .nav{display:flex;gap:10px;margin-top:22px;justify-content:space-between}
+  .btn{cursor:pointer;font:inherit;font-size:13px;border-radius:10px;padding:10px 18px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);transition:.2s;text-decoration:none;display:inline-block;text-align:center}
+  .btn:hover:not(:disabled){color:var(--text);border-color:var(--cyan)}
+  .btn:disabled{opacity:.35;cursor:default}
+  .btn.main{background:linear-gradient(135deg,var(--cyan),var(--gold));color:#06121a;border:none;font-weight:650}
+  .btn.main:hover{filter:brightness(1.12)}
+
+  /* 结果 */
+  #result{display:none}
+  .rhead{text-align:center;padding-bottom:20px;border-bottom:1px solid var(--line);margin-bottom:20px}
+  .remoji{font-size:54px;line-height:1;margin-bottom:8px}
+  .rcode{font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--cyan)}
+  .rtype{font-size:30px;font-weight:700;margin:8px 0 6px;color:var(--gold)}
+  .rline{font-size:14px;line-height:1.8;color:#cfd8e6;margin:0}
+  .rar{display:inline-block;margin-top:12px;font-size:11px;padding:5px 11px;border:1px solid var(--line);border-radius:20px;color:var(--muted)}
+
+  .axes{margin:22px 0 6px}
+  .axis{margin-bottom:14px}
+  .axis .lab{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);
+    font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em;margin-bottom:6px}
+  .axis .lab b{color:var(--muted);font-weight:600}
+  .track{position:relative;height:7px;background:rgba(255,255,255,.07);border-radius:4px}
+  .track i{position:absolute;top:0;left:0;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--cyan),var(--gold));transition:width .5s ease}
+  .track::after{content:"";position:absolute;left:50%;top:-3px;width:1px;height:13px;background:rgba(255,255,255,.18)}
+
+  .block{margin-top:22px}
+  .block h3{font-size:12px;letter-spacing:.16em;color:var(--dim);font-weight:600;margin:0 0 12px;
+    font-family:ui-monospace,Menlo,monospace}
+  .sym{position:relative;padding-left:20px;font-size:14px;line-height:1.85;color:#cfd8e6;margin-bottom:8px}
+  .sym::before{content:"·";position:absolute;left:6px;color:var(--gold);font-weight:700}
+  .tip{font-size:14px;line-height:1.9;color:#dbe4f0;background:rgba(232,180,92,.07);
+    border-left:2px solid var(--gold);border-radius:0 10px 10px 0;padding:14px 16px}
+  .share{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+  .share .btn{flex:1;min-width:110px}
+  .copied{color:var(--green)!important;border-color:var(--green)!important}
+  footer{margin-top:34px;text-align:center;font-size:11px;color:var(--dim);line-height:1.8}
+
+  #intro .facts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:22px 0 6px}
+  #intro .facts span{font-size:11px;padding:5px 12px;border:1px solid var(--line);border-radius:20px;color:var(--muted)}
+  #intro .big{display:block;width:100%;margin-top:22px;padding:14px;font-size:15px}
+
+  @media(max-width:520px){
+    h1{font-size:26px}
+    .card{padding:22px 18px;border-radius:16px}
+    .qtext{font-size:17px}
+    .rtype{font-size:26px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">SBTI · SILLY BIG PERSONALITY TEST</div>
+    <h1>SBTI <em>人格测试</em></h1>
+    <p class="sub">一个不太正经的人格测试。<br>20 道题，测出你是这池子里哪一种人。</p>
+    <div class="warn">⚠️ 本测试是对 MBTI 的戏仿，纯属娱乐，没有任何心理学依据。结果仅供自嘲与转发，请勿当真，更别写进简历。</div>
+    <a class="back" href="../games/">← 返回游戏合集</a>
+  </header>
+
+  <div class="card" id="intro">
+    <div class="qtext" style="margin-bottom:8px">准备好了吗</div>
+    <p class="sub" style="text-align:left">题目都很日常：电梯里遇到同事、深夜两点在想什么、计划被临时打乱会怎样。跟着第一反应选就好，想太多反而不准。</p>
+    <div class="facts">
+      <span>20 道题</span><span>约 3 分钟</span><span>16 种人格</span><span>不收集任何数据</span>
+    </div>
+    <button class="btn main big" id="start">开始测试</button>
+  </div>
+
+  <div class="card" id="quiz" style="display:none">
+    <div class="progress">
+      <span class="step" id="step">01 / 20</span>
+      <div class="bar"><i id="fill"></i></div>
+    </div>
+    <div class="qnum" id="qnum">QUESTION 01</div>
+    <p class="qtext" id="qtext"></p>
+    <div class="opts" id="opts"></div>
+    <div class="nav">
+      <button class="btn" id="prev" disabled>← 上一题</button>
+      <button class="btn main" id="next" disabled>下一题</button>
+    </div>
+  </div>
+
+  <div class="card" id="result">
+    <div class="rhead">
+      <div class="remoji" id="remoji">🪞</div>
+      <div class="rcode" id="rcode">IMSB</div>
+      <div class="rtype" id="rname">自我攻击者</div>
+      <p class="rline" id="rline"></p>
+      <span class="rar" id="rar"></span>
+    </div>
+    <div class="axes" id="axes"></div>
+    <div class="block">
+      <h3>典型症状</h3>
+      <div id="syms"></div>
+    </div>
+    <div class="block">
+      <h3>一句劝</h3>
+      <div class="tip" id="rtip"></div>
+    </div>
+    <div class="share">
+      <button class="btn main" id="copy">复制结果</button>
+      <button class="btn" id="again">再测一次</button>
+      <a class="btn" href="../games/">返回游戏合集</a>
+    </div>
+  </div>
+
+  <footer>
+    灵感来自网络上流行的 SBTI（Silly Big Personality Test）戏仿测试<br>
+    本站版本为原创题目与文案 · 结果在本地计算，不上传
+  </footer>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+
+  var AXES=[
+    {k:'e', name:'社交电量', pos:'E 外放', neg:'I 独处'},
+    {k:'g', name:'行动力',   pos:'G 冲锋', neg:'Z 摆烂'},
+    {k:'o', name:'脑内戏',   pos:'O 内耗', neg:'N 钝感'},
+    {k:'c', name:'秩序感',   pos:'C 计划', neg:'R 随性'}
+  ];
+
+  var Q=[
+    ['周五晚上，朋友临时喊你出去撸串。',[['马上出门，鞋都没换',2],['先问一句都有谁',0],['回「下次一定」',-2]],'e'],
+    ['电梯里碰到不太熟的同事。',[['主动开个话头',2],['点头微笑',0],['低头看手机',-2]],'e'],
+    ['聚会结束回到家，你的状态是：',[['意犹未尽，还想再聊',2],['没什么特别感觉',0],['需要安静躺两天',-2]],'e'],
+    ['打开微信，一个群 99+ 未读。',[['一条条爬完，还要接话',2],['挑重点看',0],['一键清空红点',-2]],'e'],
+    ['需要打电话办件事。',[['直接打，边说边想',2],['先想好说什么',0],['能在线上办就绝不打',-2]],'e'],
+
+    ['领导下午派活，明早就要。',[['当场开工',2],['先摸一会儿鱼再说',0],['明早的事明早做',-2]],'g'],
+    ['手机里的待办清单：',[['常常能清空',2],['记得看，但不太动',0],['已经三百多条了',-2]],'g'],
+    ['房间开始乱了。',[['立刻收拾',2],['攒到周末',0],['乱着也能过',-2]],'g'],
+    ['距离截止日期还有一周。',[['已经在做了',2],['有点紧张但没动',0],['那是下周的事',-2]],'g'],
+    ['想学一个新技能。',[['今天就开始',2],['先收藏教程',0],['收藏夹里已经两百个了',-2]],'g'],
+
+    ['白天说错了一句话，晚上你：',[['反复回放那一幕',2],['想一会儿就过去了',0],['早忘了',-2]],'o'],
+    ['深夜两点，你通常在：',[['复盘三年前的尴尬瞬间',2],['刷视频',0],['睡着了',-2]],'o'],
+    ['朋友一句话让你有点不舒服。',[['脑内演一百遍',2],['想一会儿',0],['当场说开就完事',-2]],'o'],
+    ['别人认真夸了你一句。',[['反复品这句话',2],['开心一下',0],['哦，然后呢',-2]],'o'],
+    ['你怎么评价自己？',[['常常觉得自己不行',2],['一般般吧',0],['我挺好的',-2]],'o'],
+
+    ['出门旅行前，你会：',[['列清单、订好每一站',2],['大致想一下',0],['到了再说',-2]],'c'],
+    ['你的电脑桌面：',[['分类归档',2],['有点乱，但找得到',0],['全堆在桌面',-2]],'c'],
+    ['点外卖时：',[['提前想好吃什么',2],['打开 App 再选',0],['让同事帮我点',-2]],'c'],
+    ['计划被临时打乱。',[['很难受，立刻重排',2],['有点烦',0],['无所谓，都行',-2]],'c'],
+    ['你的作息：',[['基本固定',2],['看情况',0],['困了就睡，醒了就起',-2]],'c']
+  ];
+
+  var TYPES={
+    EGOC:{n:'卷王',en:'GRIND',e:'👑',line:'嘴上说着躺平，手上已经在写周报了。',rare:'3.1%',
+      s:['计划表精确到半小时，还留了一栏「缓冲」','睡前想的不是明天多累，是明天先干哪件','休假第二天就开始有点心慌'],
+      t:'你不是不会休息，是休息时也在给自己打分。偶尔允许自己交一份 60 分的作业。'},
+    EGOR:{n:'炮仗',en:'BOOM',e:'🧨',line:'先冲，再想，最后在深夜总结教训。',rare:'5.4%',
+      s:['说干就干，方案边做边改','情绪来得快去得也快','深夜复盘会突然坐起来：「那句话我不该说」'],
+      t:'你的行动力很值钱，给它配一个「出发前三十秒」就够了。'},
+    EGNC:{n:'总指挥',en:'BOSS',e:'🎯',line:'别人还在寒暄，你已经把分工写好了。',rare:'2.6%',
+      s:['聚会里自动成为组织者','受不了低效，但会笑着催','计划被打乱，立刻给出 B 方案'],
+      t:'不是所有人都需要被安排。偶尔让别人乱一乱，天不会塌。'},
+    EGNR:{n:'野马',en:'MUSTANG',e:'🐎',line:'想到就去做，做完再说为什么。',rare:'4.8%',
+      s:['说走就走的旅行常客','很少内耗，睡一觉就好了','计划这种东西，出发前想起来才做'],
+      t:'你的自由感很感染人，只要记得给重要的人和事留个锚。'},
+
+    EZOC:{n:'送钱者',en:'ATM',e:'💸',line:'不好意思拒绝，于是把时间、精力和情绪都送了出去。',rare:'6.2%',
+      s:['别人的请求先答应，再想办法','拒绝别人比加班还累','事后常常后悔，但下次还是答应'],
+      t:'先说「我想想」，这五个字能救你一半的精力。'},
+    EZOR:{n:'老好人',en:'NICE',e:'🫠',line:'都行、可以、你决定，然后默默有点委屈。',rare:'7.5%',
+      s:['点菜永远说随便','别人不开心，你先反省自己','很少提要求，提了也补一句「没关系」'],
+      t:'你的温柔不该以消失自己为代价，试着说出一次真实偏好。'},
+    EZNC:{n:'摆件',en:'DECOR',e:'🪑',line:'在场、安静、有用，但绝不主动。',rare:'3.9%',
+      s:['群里潜水，线下准时到','安排好了就跟着走，从不抱怨','别人问你意见，你说都挺好'],
+      t:'你不缺能力，缺一次「我先说」的机会。'},
+    EZNR:{n:'吗喽',en:'MALO',e:'🐒',line:'活着就行，别的不急。',rare:'9.1%',
+      s:['能坐着不站着，能躺着不坐着','对 deadline 有一种玄学般的淡定','嘴上天天喊辞职，工位坐得最稳'],
+      t:'摆烂是策略不是罪。只是偶尔给自己一点小目标，日子才不会发霉。'},
+
+    IGOC:{n:'自我攻击者',en:'IMSB',e:'🪞',line:'内心戏一万字，出口只有「没事」。',rare:'8.4%',
+      s:['白天社交，晚上审自己','别人的一句话能拆出八种含义','做完一件事，先找自己的毛病'],
+      t:'你对自己太狠了。试着用你对朋友说话的语气，对自己说一遍。'},
+    IGOR:{n:'夜行侠',en:'OWL',e:'🦉',line:'白天隐身，深夜出手。',rare:'4.2%',
+      s:['灵感总在凌晨两点出现','不爱开会，但活干得漂亮','计划是什么，感觉来了就行'],
+      t:'你的夜晚很值钱，但别把它全部用光。'},
+    IGNC:{n:'匠人',en:'CRAFT',e:'🔧',line:'不声不响，把事做到别人挑不出毛病。',rare:'3.3%',
+      s:['喜欢一个人把细节磨到位','不爱解释，作品会说话','对「差不多就行」有生理性反感'],
+      t:'你的标准很高，记得也给合作者留一点发挥空间。'},
+    IGNR:{n:'独狼',en:'LONE',e:'🐺',line:'不需要队友，也不需要观众。',rare:'5.8%',
+      s:['一个人吃饭、看电影毫无压力','决定做得快，也不太解释','对集体活动保持礼貌的距离'],
+      t:'独处是你的超能力。但偶尔开一扇门，会有人真的想进来。'},
+
+    IZOC:{n:'装死者',en:'ZZZZ',e:'😴',line:'在线，但不完全在线。',rare:'6.6%',
+      s:['消息回得很慢，理由是「刚看到」','能用表情包绝不打字','其实什么都看见了'],
+      t:'躲一躲没关系，只是别把重要的人也一起躲掉。'},
+    IZOR:{n:'咸鱼',en:'SALT',e:'🐟',line:'没有计划，没有野心，也没有特别不开心。',rare:'8.8%',
+      s:['周末可以一整天不出门','问你想干嘛，你说都行','对热闹没有向往，对安静也没有执念'],
+      t:'平也是一种活法。但给自己留一件想起来会开心的小事。'},
+    IZNC:{n:'僧人',en:'MONK',e:'🧘',line:'有秩序地清心寡欲。',rare:'2.2%',
+      s:['作息规律，情绪平稳','该做的事会做，多余的事一概不做','别人焦虑时，你是那个递水的人'],
+      t:'你的稳定很珍贵。记得偶尔让自己失控一次，比如多吃一块蛋糕。'},
+    IZNR:{n:'空气',en:'AIR',e:'🌫️',line:'存在感很低，但少了你会觉得哪里不对。',rare:'7.2%',
+      s:['不争不抢，被忽略也不生气','很容易适应任何环境','别人回忆起来会说「他啊，挺好的」'],
+      t:'你不需要变得耀眼，但可以试着被看见一次。'}
+  };
+
+  var answers=new Array(Q.length).fill(null);
+  var cur=0;
+
+  function render(){
+    var q=Q[cur];
+    $('step').textContent=String(cur+1).padStart(2,'0')+' / '+Q.length;
+    $('qnum').textContent='QUESTION '+String(cur+1).padStart(2,'0');
+    $('fill').style.width=(cur/Q.length*100)+'%';
+    $('qtext').textContent=q[0];
+    var box=$('opts'); box.innerHTML='';
+    q[1].forEach(function(o,i){
+      var b=document.createElement('button');
+      b.className='opt'+(answers[cur]===i?' on':'');
+      b.innerHTML='<span class="key">'+'ABC'[i]+'</span><span>'+o[0]+'</span>';
+      b.onclick=function(){
+        answers[cur]=i;
+        render();
+        setTimeout(next,150);
+      };
+      box.appendChild(b);
+    });
+    $('prev').disabled=cur===0;
+    $('next').disabled=answers[cur]===null;
+    $('next').textContent=cur===Q.length-1?'查看结果':'下一题';
+  }
+  function next(){
+    if(answers[cur]===null)return;
+    if(cur<Q.length-1){cur++;render();}
+    else finish();
+  }
+
+  function calc(){
+    var sum={e:0,g:0,o:0,c:0};
+    Q.forEach(function(q,i){
+      var pick=q[1][answers[i]];
+      if(pick)sum[q[2]]+=pick[1];
+    });
+    var code=(sum.e>0?'E':'I')+(sum.g>0?'G':'Z')+(sum.o>0?'O':'N')+(sum.c>0?'C':'R');
+    return {sum:sum,code:code};
+  }
+
+  function finish(){
+    var r=calc(), t=TYPES[r.code]||TYPES.IZOR;
+    $('quiz').style.display='none';
+    $('result').style.display='block';
+    $('remoji').textContent=t.e;
+    $('rcode').textContent=r.code;
+    $('rname').textContent=t.n;
+    $('rline').textContent='「'+t.line+'」';
+    $('rar').textContent='稀有度 '+t.rare+'（编的）';
+    $('syms').innerHTML=t.s.map(function(x){return '<div class="sym">'+x+'</div>';}).join('');
+    $('rtip').textContent=t.t;
+    $('axes').innerHTML=AXES.map(function(a){
+      var v=r.sum[a.k], pct=Math.round((v+10)/20*100);
+      return '<div class="axis"><div class="lab"><b>'+a.neg+'</b><span>'+a.name+'</span><b>'+a.pos+'</b></div>'+
+        '<div class="track"><i style="width:'+pct+'%"></i></div></div>';
+    }).join('');
+    window.scrollTo({top:0,behavior:'smooth'});
+    window.__sbtiResult='我的 SBTI 人格是：'+t.n+'（'+r.code+' · '+t.en+'）——'+t.line;
+  }
+
+  $('start').onclick=function(){
+    $('intro').style.display='none';
+    $('quiz').style.display='block';
+    render();
+  };
+  $('prev').onclick=function(){if(cur>0){cur--;render();}};
+  $('next').onclick=next;
+  $('again').onclick=function(){
+    answers=new Array(Q.length).fill(null);cur=0;
+    $('result').style.display='none';
+    $('intro').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+  $('copy').onclick=function(){
+    var btn=this, txt=(window.__sbtiResult||'')+'\n'+location.href.split('?')[0];
+    function ok(){btn.textContent='已复制 ✓';btn.classList.add('copied');
+      setTimeout(function(){btn.textContent='复制结果';btn.classList.remove('copied');},1800);}
+    function fallback(){
+      var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){}
+      document.body.removeChild(ta);
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(ok,fallback);
+    }else fallback();
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>

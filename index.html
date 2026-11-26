@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#031a26">
-<meta name="description" content="大黄鱼游乐场 —— 一池子会游的鱼，每条都是一个应用。">
-<title>大黄鱼游乐场</title>
+<meta name="description" content="鱼塘 —— 一池子会游的鱼，每条都是一个应用。">
+<title>鱼塘</title>
 <style>
   :root{
     --deep:#031620;--glow:#ffd76a;--text:#eaf6f7;
@@ -94,7 +94,7 @@
   .fish.decor{pointer-events:none}
   .fish .art{display:block;transform-origin:center;transition:filter .3s}
   .fish svg{display:block;width:var(--w,110px);height:auto;overflow:visible;
-    filter:drop-shadow(0 7px 10px rgba(0,0,0,.3))}
+    filter:drop-shadow(0 5px 8px rgba(0,0,0,.26))}
   .fish svg .tail{transform-box:view-box;transform-origin:var(--px) var(--py);
     animation:tail var(--td) ease-in-out infinite alternate}
   .fish svg .body{transform-box:view-box;transform-origin:var(--hx) 42px;
@@ -176,6 +176,14 @@
     .actions{justify-content:flex-start}
     .brand p{font-size:11px}
     .hint{bottom:14px;font-size:10px;line-height:1.6}
+    /* 手机端性能降级：SVG 滤镜是重绘大户，直接关掉 */
+    .fish svg,.fish.gold svg,.fish:hover .art,.fish:focus-visible .art,.fish.gold:hover .art{filter:none}
+    .fish.gold .art{animation:none}
+    .fish svg .tail,.fish svg .body,.fish svg .pec{animation-duration:1.4s}
+    .fish.dim{opacity:.62}
+    .bubble:nth-child(2n){display:none}
+    .weeds svg:nth-child(2n){display:none}
+    .rays i:nth-child(2n){display:none}
   }
   @media(prefers-reduced-motion:reduce){
     .caustics,.rays i,.bubble,.weeds svg,.fish svg .tail,.fish svg .body,.fish svg .pec,
@@ -184,7 +192,7 @@
 </style>
 </head>
 <body>
-<div id="sea" aria-label="大黄鱼游乐场">
+<div id="sea" aria-label="鱼塘">
   <div class="caustics"></div>
   <div class="rays"><i></i><i></i><i></i><i></i><i></i></div>
   <div class="bubbles" id="bubbles"></div>
@@ -194,13 +202,12 @@
 
   <div class="hud">
     <div class="brand">
-      <div class="tag">PLATFORM 01 · 大黄鱼游乐场</div>
-      <h1>大黄鱼<em>游乐场</em></h1>
+      <h1>鱼<em>塘</em></h1>
       <p>一池子游动的鱼，每条都是一个应用。听说其中有一条传说大黄鱼。</p>
     </div>
     <div class="actions">
       <button class="btn" id="shuffle" title="让一条鱼游到你面前">🎲 随机一条</button>
-      <a class="btn" href="list/">📋 正常列表</a>
+      <a class="btn" href="list/">📋 完整列表</a>
       <button class="btn" id="music" aria-pressed="false" title="背景音乐开关">🎵 音乐<span class="eq"><i></i><i></i><i></i></span></button>
     </div>
   </div>
@@ -240,49 +247,67 @@
   /* ---------- 鱼种：颜色 + 体型 + 花纹 ---------- */
   const SPECIES=[
     {name:'小丑鱼', shape:'oval', c1:'#ffa244',c2:'#f26a1b',c3:'#b3400d',belly:'#ffe6b8',fin:'#f07822',pat:'stripe',pc:'#fff4df',sw:8,po:.9,edge:'#a83a0b'},
-    {name:'蓝吊',   shape:'deep', c1:'#55ccf7',c2:'#1f80d2',c3:'#0e4a91',belly:'#c3f2ff',fin:'#ffd447',pat:'none',edge:'#0c3c74'},
-    {name:'蝴蝶鱼', shape:'deep', c1:'#ffe985',c2:'#f6c234',c3:'#c68811',belly:'#fff7da',fin:'#efa91c',pat:'stripe',pc:'#46310e',sw:7,po:.8},
-    {name:'石斑',   shape:'round',c1:'#bda072',c2:'#8a6a43',c3:'#503821',belly:'#ead9b4',fin:'#7b5b37',pat:'spots',pc:'#3d2816'},
-    {name:'神仙鱼', shape:'deep', c1:'#f6e5c2',c2:'#e0b978',c3:'#a87a3e',belly:'#fff7e6',fin:'#7fb6c8',pat:'stripe',pc:'#6b4a24',sw:6,po:.7},
-    {name:'河豚',   shape:'round',c1:'#f8da80',c2:'#dfa83c',c3:'#9a6918',belly:'#fff4ca',fin:'#c98e2c',pat:'spots',pc:'#795111'},
+    {name:'蓝吊',   shape:'deep', c1:'#55ccf7',c2:'#1f80d2',c3:'#0e4a91',belly:'#c3f2ff',fin:'#4a8ee0',pat:'none',edge:'#0c3c74'},
+    {name:'蝴蝶鱼', shape:'deep', c1:'#cfeeff',c2:'#6fb2ea',c3:'#2b5f9c',belly:'#eef9ff',fin:'#9ccdf2',pat:'stripe',pc:'#1f3d63',sw:7,po:.8},
+    {name:'石斑',   shape:'round',c1:'#a8a89a',c2:'#74746a',c3:'#41413c',belly:'#e2e2d8',fin:'#6d6d62',pat:'spots',pc:'#2f2f2a'},
+    {name:'神仙鱼', shape:'deep', c1:'#f4f7fa',c2:'#c8d6e4',c3:'#8896a8',belly:'#ffffff',fin:'#7fb6c8',pat:'stripe',pc:'#5a6779',sw:6,po:.7},
+    {name:'河豚',   shape:'round',c1:'#e3e9f7',c2:'#a9b7d6',c3:'#6b7897',belly:'#f7faff',fin:'#8f9fc4',pat:'spots',pc:'#4a5471'},
     {name:'鳗鱼',   shape:'long', c1:'#93d9b5',c2:'#3f9e83',c3:'#1d5c50',belly:'#dcf5e8',fin:'#2c7f6a',pat:'lines',pc:'#d9f5e8'},
     {name:'鲷鱼',   shape:'oval', c1:'#ffc6cc',c2:'#ef7d8e',c3:'#b23e5a',belly:'#ffe9ea',fin:'#e06679',pat:'none',edge:'#93314b'},
     {name:'鲭鱼',   shape:'slim', c1:'#acdbea',c2:'#4a93b5',c3:'#1c4d70',belly:'#e9f7fb',fin:'#2e6f92',pat:'stripe',pc:'#153d5b',sw:10,po:.6},
-    {name:'锦鲤',   shape:'oval', c1:'#fffbf4',c2:'#f3e4cf',c3:'#c9b299',belly:'#ffffff',fin:'#f3c9b0',pat:'patch',pc:'#ef6a2a'},
+    {name:'锦鲤',   shape:'oval', c1:'#fdfdff',c2:'#eef1f5',c3:'#c2c9d3',belly:'#ffffff',fin:'#f0c8c8',pat:'patch',pc:'#e2474d'},
     {name:'孔雀鱼', shape:'slim', c1:'#ffdcf2',c2:'#e77fc4',c3:'#8d3e89',belly:'#fff1fa',fin:'#ff8fd0',pat:'patch',pc:'#5d2e8e'},
     {name:'金枪鱼', shape:'slim', c1:'#bcdfea',c2:'#3f7fa8',c3:'#123e62',belly:'#ebf7fa',fin:'#2a6288',pat:'none'},
-    {name:'刺尾鱼', shape:'deep', c1:'#9fe3c4',c2:'#37a889',c3:'#156a5b',belly:'#e0f9ee',fin:'#f2c447',pat:'none'},
-    {name:'狮子鱼', shape:'round',c1:'#ffb48d',c2:'#e06a4e',c3:'#95392d',belly:'#ffe2cf',fin:'#f2956b',pat:'stripe',pc:'#fff2e4',sw:7,po:.75}
+    {name:'刺尾鱼', shape:'deep', c1:'#9fe3c4',c2:'#37a889',c3:'#156a5b',belly:'#e0f9ee',fin:'#5fd3b5',pat:'none'},
+    {name:'狮子鱼', shape:'round',c1:'#ffb48d',c2:'#e06a4e',c3:'#95392d',belly:'#ffe2cf',fin:'#f2956b',pat:'stripe',pc:'#fff2e4',sw:7,po:.75},
+    {name:'月光鱼', shape:'deep', c1:'#efe9ff',c2:'#b9a9f2',c3:'#6952b5',belly:'#f8f4ff',fin:'#cfc2ff',pat:'patch',pc:'#ffffff',edge:'#53409a'},
+    {name:'蓝魔',   shape:'slim', c1:'#8fc2ff',c2:'#3a76e8',c3:'#1a3d9c',belly:'#dceaff',fin:'#5590f0',pat:'none',edge:'#16337f'},
+    {name:'紫罗兰', shape:'deep', c1:'#ddccff',c2:'#a184ea',c3:'#5c3aab',belly:'#f1e9ff',fin:'#b7a1f2',pat:'stripe',pc:'#3b2278',sw:7,po:.72},
+    {name:'银龙',   shape:'long', c1:'#f4f7fa',c2:'#c6d0da',c3:'#7d8894',belly:'#ffffff',fin:'#a9b5c2',pat:'none',edge:'#616c78'},
+    {name:'黑玛丽', shape:'slim', c1:'#79818e',c2:'#414852',c3:'#1c2026',belly:'#b3bcc7',fin:'#2d323a',pat:'none',edge:'#14171b'},
+    {name:'红箭',   shape:'oval', c1:'#ff9d92',c2:'#ef5a52',c3:'#a82b2c',belly:'#ffdad5',fin:'#e36a63',pat:'none',edge:'#8d2121'},
+    {name:'珊瑚雀', shape:'oval', c1:'#ffd6c9',c2:'#ff8f6e',c3:'#b8482f',belly:'#fff1ec',fin:'#ffa184',pat:'stripe',pc:'#942f1b',sw:6,po:.5},
+    {name:'翡翠',   shape:'oval', c1:'#bcf0cd',c2:'#4fb37a',c3:'#23664b',belly:'#e9fcf1',fin:'#6fcb92',pat:'lines',pc:'#1d5540'},
+    {name:'紫斑鳜', shape:'round',c1:'#cfc2ee',c2:'#9482c8',c3:'#513b80',belly:'#f0eaff',fin:'#a08ccf',pat:'spots',pc:'#2f2054'},
+    {name:'蓝面神仙',shape:'deep',c1:'#b3ece6',c2:'#3faea2',c3:'#175d58',belly:'#e8fffb',fin:'#f0906a',pat:'stripe',pc:'#11433f',sw:6,po:.62},
+    {name:'粉蓝吊', shape:'deep', c1:'#d6e4ff',c2:'#82abf2',c3:'#4368bd',belly:'#f0f5ff',fin:'#6695e6',pat:'patch',pc:'#2f4f96'}
   ];
   const GOLD={name:'传说大黄鱼',shape:'deep',c1:'#fff8ce',c2:'#ffd35a',c3:'#d98b10',
     belly:'#fffbe8',fin:'#ffc23c',pat:'patch',pc:'#fff0a8',edge:'#b8760a',gold:true};
 
   const APPS=[
-    {n:'最后一班地铁',p:'games/last-train/',e:'🚇',s:8},
-    {n:'信号 · 生命线',p:'games/lifeline/',e:'💬',s:10},
-    {n:'第七封信',p:'games/text/escape/',e:'🔐',s:4},
-    {n:'别回头',p:'games/text/horror/',e:'🕯️',s:3},
-    {n:'深夜便利店',p:'games/text/store/',e:'🏪',s:1},
-    {n:'雨夜出租车',p:'games/text/taxi/',e:'🌧️',s:12},
-    {n:'2048',p:'games/2048/',e:'🔢',s:2},
-    {n:'Threes',p:'games/threes/',e:'3️⃣',s:9},
-    {n:'六边形 2048',p:'games/hex2048/',e:'⬡',s:13},
-    {n:'扫雷',p:'games/minesweeper/',e:'💣',s:5},
-    {n:'数独',p:'games/sudoku/',e:'9️⃣',s:11},
-    {n:'记忆翻牌',p:'games/memory/',e:'🃏',s:7},
-    {n:'围住小猫',p:'games/cat/',e:'🐱',s:0},
-    {n:'合成大西瓜',p:'games/suika/',e:'🍉',s:6},
-    {n:'小恐龙快跑',p:'games/dino/',e:'🦖',s:3},
-    {n:'距离',p:'tools/countdown/',e:'⏳',s:11},
-    {n:'天气查询',p:'tools/weather/',e:'☀️',s:1},
-    {n:'头条速览',p:'tools/news/',e:'📰',s:9},
-    {n:'今天吃什么',p:'tools/food/',e:'🍜',s:2}
+    {n:'文字游戏目录',p:'games/text/',e:'📖'},
+    {n:'2048',p:'games/2048/',e:'🔢'},
+    {n:'Threes',p:'games/threes/',e:'3️⃣'},
+    {n:'六边形 2048',p:'games/hex2048/',e:'⬡'},
+    {n:'扫雷',p:'games/minesweeper/',e:'💣'},
+    {n:'数独',p:'games/sudoku/',e:'9️⃣'},
+    {n:'记忆翻牌',p:'games/memory/',e:'🃏'},
+    {n:'围住小猫',p:'games/cat/',e:'🐱'},
+    {n:'SBTI 人格测试',p:'personality/',e:'🪞'},
+    {n:'合成大西瓜',p:'games/suika/',e:'🍉'},
+    {n:'小恐龙快跑',p:'games/dino/',e:'🦖'},
+    {n:'佳期可数',p:'tools/countdown/',e:'⏳'},
+    {n:'天气查询',p:'tools/weather/',e:'☀️'},
+    {n:'头条速览',p:'tools/news/',e:'📰'},
+    {n:'今天吃什么',p:'tools/food/',e:'🍜'}
   ];
 
   const school=document.getElementById('school');
   const rand=(a,b)=>a+Math.random()*(b-a);
   const shortest=(from,to)=>{let d=(to-from+Math.PI)%(Math.PI*2);if(d<0)d+=Math.PI*2;return d-Math.PI;};
   let W=innerWidth,H=innerHeight,uid=0;
+  const isMobile=Math.min(innerWidth,innerHeight)<700||innerWidth<820;
+  // 虚拟池宽度：屏幕越大倍率越小，同屏鱼就越多；手机端倍率最大，同屏最少
+  function calcPool(w){
+    if(isMobile) return Math.max(w*3,1150);
+    if(w>=2400) return Math.max(w*1.12,2700);
+    if(w>=1800) return Math.max(w*1.28,2300);
+    if(w>=1500) return Math.max(w*1.5,2150);
+    if(w>=1200) return Math.max(w*1.85,2050);
+    return Math.max(w*2.2,1900);
+  }
+  let POOL=calcPool(W);
 
   function tailPath(k,px,py){
     if(k==='deep') return `M${px} ${py} Q${px-22} ${py-30} ${px-37} ${py-24} Q${px-20} ${py} ${px-37} ${py+24} Q${px-22} ${py+30} ${px} ${py} Z`;
@@ -334,8 +359,10 @@
   }
 
   const fish=[];
+  let laneIdx=0;                      // 泳道计数器：让初始的鱼在竖直方向均匀铺开
   function addFish(sp,opt){
     opt=opt||{};
+    if(!sp)sp=SPECIES[Math.floor(rand(0,SPECIES.length))]||SPECIES[0]; // 防御：索引越界不再拖垮整页
     const app=opt.app||null;
     const el=document.createElement(app?'a':'div');
     if(app){el.className='fish'+(sp.gold?' gold':'');el.href=app.p;el.title=app.e+' '+app.n;
@@ -353,9 +380,16 @@
     el.innerHTML='<span class="art">'+fishSVG(sp,++uid)+'</span>'+
       (app?'<span class="fname">'+app.e+' '+app.n+'</span>':'');
     school.appendChild(el);
+    // 左右方向各半：一半朝右(0)、一半朝左(π)，穿行时更自然
+    const dir=opt.dir!==undefined?opt.dir:(Math.random()<.5?0:Math.PI);
+    // 初始位置在整个虚拟池里均匀分布，与游动后的稳态一致，首屏不会空
+    const initX=opt.x!==undefined?opt.x:rand(0,Math.max(W,POOL));
+    // 泳道：7 条水平带轮流分配，带内随机抖动，初始不会全挤在一个高度
+    const LANES=7, top=112, band=Math.max(70,(H-200)/LANES);
+    const laneY=top+((laneIdx++%LANES)+.5)*band+rand(-band*.28,band*.28);
     const st={el,art:el.firstChild,sp,app,gold:!!sp.gold,
-      x:opt.x!==undefined?opt.x:rand(-60,W),y:opt.y!==undefined?opt.y:rand(120,Math.max(200,H-110)),
-      heading:rand(0,6.28),target:rand(0,6.28),speed:0,cruise:opt.cruise||rand(.22,.55),
+      x:initX,y:opt.y!==undefined?opt.y:laneY,
+      heading:dir,target:dir,dir:dir,speed:0,cruise:opt.cruise||rand(.22,.55),
       depth:opt.depth||rand(.7,1.15),phase:rand(0,6.28),bob:rand(2.5,8),
       turnTimer:rand(0,2600),hover:false};
     if(st.depth<.85)el.classList.add('dim');
@@ -371,18 +405,27 @@
         else{ripple(e.clientX,e.clientY);setTimeout(()=>{location.href=app.p;},300);}
       });
     }
+    // 立即写入初始 transform，避免首帧前所有鱼堆在左上角
+    el.style.transform='translate3d('+st.x.toFixed(1)+'px,'+st.y.toFixed(1)+'px,0) scale('+st.depth.toFixed(3)+')';
+    st.art.style.transform='rotate('+(dir*180/Math.PI).toFixed(1)+'deg)'+(dir>=Math.PI/2&&dir<=Math.PI*1.5?' scaleY(-1)':'');
     fish.push(st);
     return st;
   }
 
-  // 19 个应用鱼
-  APPS.forEach(app=>addFish(SPECIES[app.s],{app,w:rand(88,124)}));
-  // 传说大黄鱼
-  const golden=addFish(GOLD,{app:{n:'传说大黄鱼',p:'games/',e:'🐟'},w:170,
-    x:W*.42,y:H*.46,depth:1.22,cruise:.3});
-  // 纯观赏鱼，让池子更热闹
-  for(let i=0;i<12;i++)addFish(SPECIES[Math.floor(rand(0,SPECIES.length))],
-    {w:rand(54,96),depth:rand(.55,.88),cruise:rand(.18,.42)});
+  // 鱼的外观与应用解绑：每次加载把配色池打乱，按顺序分配，尽量不重复
+  // 新增应用时只写 n/p/e 三个字段即可，外形自动分配
+  const shuffled=SPECIES.map((_,i)=>i);
+  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+  const speciesAt=i=>SPECIES[shuffled[i%shuffled.length]]||SPECIES[0];
+  // 应用鱼：散布在比屏幕宽的虚拟池里，同屏只出现一部分
+  APPS.forEach((app,i)=>addFish(speciesAt(i),{app,w:isMobile?rand(56,80):rand(88,124)}));
+  // 传说大黄鱼：体型缩小、速度加快、周期拉长（降低出现频率）
+  const golden=addFish(GOLD,{app:{n:'传说大黄鱼',p:'games/',e:'🐟'},w:isMobile?64:104,
+    x:rand(W*.25,W*.75),y:H*.44,depth:1.18,cruise:isMobile?.72:.6,dir:Math.random()<.5?0:Math.PI});
+  // 纯观赏鱼：手机端最少，桌面按屏幕宽度递增，大屏更热闹
+  const decorCount=isMobile?4:(W>=2400?40:(W>=1800?32:(W>=1500?24:(W>=1200?17:12))));
+  for(let i=0;i<decorCount;i++)addFish(SPECIES[Math.floor(rand(0,SPECIES.length))],
+    {w:isMobile?rand(38,58):rand(50,88),depth:rand(.55,.88),cruise:rand(.18,.42)});
 
   function ripple(x,y){
     const r=document.createElement('span');r.className='ripple';
@@ -423,17 +466,18 @@
     egg.hidden=false;
   }
   document.getElementById('eggClose').addEventListener('click',()=>{
-    egg.hidden=true;golden.hover=false;golden.cruise=rand(.2,.5);
+    egg.hidden=true;golden.hover=false;golden.cruise=isMobile?.72:.6;
   });
   document.getElementById('eggGo').addEventListener('click',()=>{
     const apps=fish.filter(f=>f.app&&!f.gold);
     location.href=apps[Math.floor(rand(0,apps.length))].app.p;
   });
-  egg.addEventListener('click',e=>{if(e.target===egg){egg.hidden=true;golden.hover=false;golden.cruise=rand(.2,.5);}});
+  egg.addEventListener('click',e=>{if(e.target===egg){egg.hidden=true;golden.hover=false;golden.cruise=isMobile?.72:.6;}});
 
   /* 气泡与海草 */
   const bub=document.getElementById('bubbles');
-  for(let i=0;i<26;i++){
+  const bubbleCount=isMobile?12:22;
+  for(let i=0;i<bubbleCount;i++){
     const b=document.createElement('span');b.className='bubble';
     const sz=rand(4,15);
     b.style.width=b.style.height=sz+'px';
@@ -445,9 +489,10 @@
   }
   const weeds=document.getElementById('weeds');
   const weedSVG='<svg viewBox="0 0 40 100" preserveAspectRatio="none"><path d="M20 100 Q6 72 20 46 Q34 20 18 0 Q30 26 24 50 Q16 74 26 100Z" fill="#0d5a52"/><path d="M22 100 Q32 78 22 58" stroke="#167268" stroke-width="3" fill="none"/></svg>';
-  for(let i=0;i<13;i++)weeds.insertAdjacentHTML('beforeend',weedSVG);
+  const weedCount=isMobile?7:11;
+  for(let i=0;i<weedCount;i++)weeds.insertAdjacentHTML('beforeend',weedSVG);
 
-  addEventListener('resize',()=>{W=innerWidth;H=innerHeight;});
+  addEventListener('resize',()=>{W=innerWidth;H=innerHeight;POOL=calcPool(W);});
 
   /* 动画主循环：慢转向 + 巡游 + 上下浮动 */
   let last=0;
@@ -459,18 +504,17 @@
           f.turnTimer=rand(1300,3800);
           f.target+=rand(-1.1,1.1);
         }
-        // 靠近边界时平滑掉头，避免穿出画面
-        const m=110;
-        if(f.x<m)f.target+=shortest(f.target,0)*.1;
-        else if(f.x>W-m)f.target+=shortest(f.target,Math.PI)*.1;
-        if(f.y<115)f.target+=shortest(f.target,Math.PI/2)*.1;
-        else if(f.y>H-95)f.target+=shortest(f.target,-Math.PI/2)*.1;
+        // 穿行模式：游出虚拟池从对侧回来，左右方向都有，不再边界掉头
         f.heading+=shortest(f.heading,f.target)*Math.min(1,.028*dt);
         f.speed+=(f.cruise-f.speed)*Math.min(1,.02*dt);
         f.x+=Math.cos(f.heading)*f.speed*dt;
         f.y+=Math.sin(f.heading)*f.speed*dt;
-        if(f.x<0)f.x=0;if(f.x>W)f.x=W;
-        if(f.y<80)f.y=80;if(f.y>H-60)f.y=H-60;
+        // 水平穿行 wrap（虚拟池宽于屏幕，同屏鱼自然更少）
+        if(f.x<-90)f.x=POOL+70;
+        else if(f.x>POOL+70)f.x=-90;
+        // 垂直方向轻微约束，避免贴上沿 HUD 和下沿提示
+        if(f.y<110){f.y=110;f.target=f.dir>=0?rand(-.3,.3):Math.PI+rand(-.3,.3);}
+        else if(f.y>H-90){f.y=H-90;f.target=f.dir>=0?rand(-.3,.3):Math.PI+rand(-.3,.3);}
       }else{
         f.speed+=(0-f.speed)*Math.min(1,.04*dt);
       }

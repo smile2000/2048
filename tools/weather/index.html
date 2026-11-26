@@ -93,12 +93,11 @@
     <button id="searchBtn">查询</button>
   </div>
   <div class="quick" id="quick">
-    <button data-city="北京">北京</button>
-    <button data-city="上海">上海</button>
-    <button data-city="广州">广州</button>
-    <button data-city="深圳">深圳</button>
-    <button data-city="成都">成都</button>
-    <button data-city="杭州">杭州</button>
+    <button data-city="北京" data-lat="39.9042" data-lon="116.4074" data-region="北京市 · 中国">北京</button>
+    <button data-city="上海" data-lat="31.2304" data-lon="121.4737" data-region="上海市 · 中国">上海</button>
+    <button data-city="广州" data-lat="23.1291" data-lon="113.2644" data-region="广东省 · 中国">广州</button>
+    <button data-city="深圳" data-lat="22.5431" data-lon="114.0579" data-region="广东省 · 中国">深圳</button>
+    <button data-city="青岛" data-lat="36.0671" data-lon="120.3826" data-region="山东省 · 中国">青岛</button>
     <button id="locBtn">📍 定位我</button>
   </div>
   <div id="suggestBox"></div>
@@ -195,7 +194,9 @@
     try{
       const results=await geocode(name);
       if(!results.length){$('content').innerHTML='<div class="error">找不到「'+name+'」<br>换个名字试试</div>';return;}
-      const r=results[0];
+      // 同名地点很多（比如「青岛」在辽宁也有），优先取中国境内人口最多的那个
+      const cn=results.filter(x=>x.country_code==='CN');
+      const r=cn.length?cn.reduce((a,b)=>((b.population||0)>(a.population||0)?b:a)):results[0];
       const region=[r.admin1,r.country].filter(Boolean).join(' · ');
       localStorage.setItem(KEY,JSON.stringify({name:r.name,lat:r.latitude,lon:r.longitude,region:region}));
       $('cityInput').value=r.name;
@@ -234,7 +235,18 @@
   });
   $('quick').addEventListener('click',e=>{
     const b=e.target.closest('button[data-city]');
-    if(b)loadCity(b.dataset.city);
+    if(!b)return;
+    // 预设城市直接用坐标，避免「青岛」这类同名地点被解析到别的省
+    if(b.dataset.lat){
+      const lat=+b.dataset.lat, lon=+b.dataset.lon;
+      const region=b.dataset.region||'';
+      $('suggestBox').innerHTML='';
+      $('cityInput').value=b.dataset.city;
+      localStorage.setItem(KEY,JSON.stringify({name:b.dataset.city,lat,lon,region}));
+      fetchWeather(lat,lon,b.dataset.city,region);
+      return;
+    }
+    loadCity(b.dataset.city);
   });
   $('locBtn').onclick=()=>{
     if(!navigator.geolocation){alert('浏览器不支持定位');return;}

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#080b12">
-<title>工具箱 · 大黄鱼游乐场</title>
+<title>工具箱 · 鱼塘</title>
 <style>
   :root{--bg:#080b12;--panel:#121826;--line:#242e42;--text:#e5eaf3;--muted:#8a96ac;--dim:#5d687d;
     --accent:#e5484d;--cyan:#5cc8e8;--gold:#e8b45c;--amber:#e8b45c;--green:#6ec9a4;--violet:#a98be8;--pink:#e890a8}
@@ -46,10 +46,9 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="time">PLATFORM 01 · 大黄鱼游乐场</div>
     <h1>工具箱</h1>
     <p class="sub">四个日常小工具。<br>看看时间、查查天气、翻翻头条，或者直接把选择交给命运。</p>
-    <a class="back" href="../">← 返回首页</a>
+    <a class="back" href="../">← 返回鱼塘</a>
   </header>
   <div class="grid" id="grid"></div>
   <footer>
@@ -60,7 +59,7 @@
 <script>
 (function(){
   const TOOLS=[
-    {name:'距离',path:'countdown/',cat:'TIME',icon:'⏳',tone:'gold',desc:'下一个节日还有多少天？法定假期、传统节日、西洋节日，还能添加自己的纪念日。',tags:['实时倒计时','可自定义']},
+    {name:'佳期可数',path:'countdown/',cat:'TIME',icon:'⏳',tone:'gold',desc:'下一个节日还有多少天？法定假期、传统节日、西洋节日，还能添加自己的纪念日。',tags:['实时倒计时','可自定义']},
     {name:'天气查询',path:'weather/',cat:'WEATHER',icon:'☀️',tone:'green',desc:'搜城市或一键定位，看当前天气、未来五天预报和穿衣建议。无需注册。',tags:['实用工具','实时数据']},
     {name:'头条速览',path:'news/',cat:'NEWS',icon:'📰',tone:'accent',desc:'知乎日报，加上 36氪、极客公园、IT之家等国内科技媒体，一点直达原文。',tags:['新闻聚合','10 个信源']},
     {name:'今天吃什么',path:'food/',cat:'DECISION',icon:'🍜',tone:'amber',desc:'选择困难症专用。滚轮一转，把决定交给命运，还能自己加候选清单。',tags:['决策骰子','可自定义']}
