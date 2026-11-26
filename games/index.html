@@ -104,6 +104,7 @@
     {name:'今天吃什么',path:'../tools/food/',cat:'casual',icon:'🍜',tone:'amber',desc:'选择困难症专用。滚轮一转，把决定交给命运，还能自己加候选。',tags:['决策骰子','可自定义']}
   ];
   const LABEL={text:'文字类',number:'数字类',puzzle:'益智类',casual:'休闲类'};
+  const $=id=>document.getElementById(id);
   const grid=$('grid'), tabs=$('tabs'), search=$('search'), count=$('count');
   let active='all';
   function render(){
